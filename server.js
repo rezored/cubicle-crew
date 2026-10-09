@@ -102,7 +102,7 @@ function scanSessions() {
   if (key === liveKey) return;
   liveKey = key; live = list;
   if (DEBUG) console.log('живи сесии:', list.map((x) => `${x.label}/${x.agent.slice(0, 8)} ${x.status}`).join(', ') || '—');
-  wallet.setLive(list.map((x) => x.agent));
+  wallet.setLive(list.map((x) => x.agent), list.filter((x) => x.status === 'busy').map((x) => x.agent));
   broadcast({ type: 'sessions', list });
 }
 

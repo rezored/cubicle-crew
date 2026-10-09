@@ -66,7 +66,7 @@ export class Wallet {
   }
 
   /** Живите сесии на Claude Code (id-та) – почиващите също печелят по малко. */
-  setLive(ids) { this.earner.setLive(ids); }
+  setLive(ids, busy) { this.earner.setLive(ids, busy); }
 
   /** Всяко събитие от транскриптите. */
   ingest(evt) {

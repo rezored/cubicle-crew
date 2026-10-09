@@ -39,10 +39,11 @@ export class Earner {
     this.lastDaily = lastDaily;
     this.agents = new Map();
     this.live = new Set();         // живи главни сесии (~/.claude/sessions) – печелят малко и докато почиват
+    this.busy = new Set();         // от тях: status 'busy' – Claude мисли/пише дълъг отговор, без редове в транскрипта
     this.last = null;
   }
 
-  setLive(ids) { this.live = new Set(ids); }
+  setLive(ids, busy = []) { this.live = new Set(ids); this.busy = new Set(busy); }
 
   agent(id, now) {
     let a = this.agents.get(id);
@@ -81,7 +82,7 @@ export class Earner {
 
   stateOf(a, now) {
     const pend = [...a.pending.values()].filter((p) => now - p.start < EARN.PENDING_MAX_MS);
-    if (now - a.lastEvent > EARN.IDLE_MS && !pend.length) return 'idle';
+    if (now - a.lastEvent > EARN.IDLE_MS && !pend.length && !this.busy.has(a.id)) return 'idle';
     const last = pend[pend.length - 1];
     return last ? TOOL_STATE[last.tool] || 'running' : 'thinking';
   }
