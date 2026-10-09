@@ -1,4 +1,4 @@
-// Pixel Office като desktop приложение: малък прозорец без рамка, винаги отгоре, над трея.
+// Cubicle Crew (бивш Pixel Office) като desktop приложение: малък прозорец без рамка, винаги отгоре, над трея.
 // Сървърът (server.js) върви в същия процес – не е нужен отделен `npm start`, нито браузър.
 import { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, Notification, shell, globalShortcut } from 'electron';
 import path from 'node:path';
@@ -18,6 +18,9 @@ const log = (...a) => {
 process.on('uncaughtException', (e) => log('ERR', e.stack || e));
 process.on('unhandledRejection', (e) => log('REJ', e?.stack || e));
 log('start', process.argv.join(' '));
+// Папката с настройките остава старата (%APPDATA%/pixel-office) и след преименуването – иначе се губят размер, позиция, настройки.
+// --user-data-dir (втори екземпляр за тестове) е с предимство.
+if (!app.commandLine.hasSwitch('user-data-dir')) app.setPath('userData', path.join(app.getPath('appData'), 'pixel-office'));
 if (!app.requestSingleInstanceLock()) { log('second instance – exit'); app.quit(); }
 app.setAppUserModelId('com.pixeloffice.desktop');
 
@@ -61,7 +64,7 @@ function createWindow() {
     minWidth: 320, minHeight: 190,
     // maximizable: false – двоен клик върху лентата за местене иначе разпъва прозореца на цял екран
     frame: false, resizable: true, maximizable: false, fullscreenable: false, skipTaskbar: true, show: false,
-    alwaysOnTop: settings.onTop, backgroundColor: '#0e0c14', title: 'Pixel Office',
+    alwaysOnTop: settings.onTop, backgroundColor: '#0e0c14', title: 'Cubicle Crew',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   applyOnTop();
@@ -100,6 +103,16 @@ function trayIcon(alert) {
   rect(13, 24, 6, 3, [23, 18, 31]); rect(9, 27, 14, 3, [23, 18, 31]);
   if (alert) { rect(20, 0, 12, 12, [42, 10, 20]); rect(21, 1, 10, 10, [224, 74, 107]); rect(25, 3, 2, 4, [255, 255, 255]); rect(25, 8, 2, 2, [255, 255, 255]); }
   return nativeImage.createFromBitmap(buf, { width: S, height: S, scaleFactor: 2 });
+}
+
+// След преименуването exe-то е на нов път; записът в Run (същото име = AUMID) още сочи стария "Pixel Office.exe" -> пренасочваме го.
+function migrateLoginItem() {
+  if (!app.isPackaged) return;
+  try {
+    const s = app.getLoginItemSettings();
+    const old = (s.launchItems || []).some((i) => i.enabled && i.path && /pixel office/i.test(i.path) && path.resolve(i.path) !== path.resolve(process.execPath));
+    if (!s.openAtLogin && old) { app.setLoginItemSettings({ openAtLogin: true }); log('login item -> ' + process.execPath); }
+  } catch (e) { log('login item migrate', e?.message || e); }
 }
 
 function loginItem() {
@@ -159,7 +172,7 @@ function refreshTray() {
   if (!tray) return;
   const w = stats.waiting.length;
   tray.setImage(trayIcon(w > 0));
-  tray.setToolTip(`Pixel Office — агенти ${stats.agents} · под-агенти ${stats.subs}${w ? ` · чакат те ${w}` : ''}`);
+  tray.setToolTip(`Cubicle Crew — агенти ${stats.agents} · под-агенти ${stats.subs}${w ? ` · чакат те ${w}` : ''}`);
   tray.setContextMenu(Menu.buildFromTemplate(menuTemplate()));
 }
 
@@ -217,7 +230,7 @@ ipcMain.on('stats', (_e, s) => {
   stats = { agents: s.agents | 0, subs: s.subs | 0, tools: s.tools | 0, waiting: Array.isArray(s.waiting) ? s.waiting.map(String).slice(0, 20) : [] };
   const fresh = stats.waiting.filter((n) => !before.has(n));
   if (fresh.length && settings.notify && Notification.isSupported() && !win.isFocused()) {
-    const n = new Notification({ title: 'Pixel Office', body: fresh.length === 1 ? `${fresh[0]} чака теб` : `${fresh.length} агента чакат теб`, silent: false });
+    const n = new Notification({ title: 'Cubicle Crew', body: fresh.length === 1 ? `${fresh[0]} чака теб` : `${fresh.length} агента чакат теб`, silent: false });
     n.on('click', () => { toggleWindow(true); win.focus(); });
     n.show();
   }
@@ -232,6 +245,7 @@ app.on('before-quit', () => { quitting = true; flushWallet(); });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 
 app.whenReady().then(async () => {
+  migrateLoginItem();
   loadSettings();
   const server = await import('../server.js');
   const { startServer } = server;

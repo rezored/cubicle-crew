@@ -1,4 +1,4 @@
-# Pixel Office – notes for Claude
+# Cubicle Crew (formerly Pixel Office) – notes for Claude
 
 Local app that shows Claude Code sessions as pixel-art people in an office. Node server tails
 `~/.claude/projects/**/*.jsonl` and pushes events over WebSocket; a vanilla-JS canvas client renders them.
@@ -10,7 +10,7 @@ User-facing docs: `README.md` (English, GitHub landing page; media in `docs/medi
 npm start                 # server + web UI on http://localhost:4317  (PORT=, CLAUDE_PROJECTS_DIR=)
 npm run debug             # same, logs every parsed event and how sub-agent parents were resolved
 npm run desktop           # Electron widget (runs its own server; 4317 busy -> 4318..4320 -> random)
-npm run dist              # Windows NSIS installer -> release/PixelOffice-Setup-<version>.exe (bump "version" first)
+npm run dist              # Windows NSIS installer -> release/CubicleCrew-Setup-<version>.exe (bump "version" first)
 npm run icon              # regenerate build/icon.png (code-drawn, no deps)
 node scripts/shot.cjs "<url>" <outPrefix> <w> <h> <dpr> <ms,ms,...> [evalJs] [preEvalJs]
                           # headless Chrome screenshots + console errors + external requests (see Testing)
@@ -51,7 +51,7 @@ New poses were appended to `POSE_ORDER` (a PNG sheet made for the old order need
 Live sessions: `server.js` reads `~/.claude/sessions/<pid>.json` (`{pid, sessionId, cwd, status}`, written by Claude Code while a session is open; pid checked with `process.kill(pid, 0)`) every 3 s → WS `{type:'sessions', list:[{agent,label,status}]}` (no top-level `agent`; sent on connect + on change) and `wallet.setLive()`. Client `model.sessions()` creates missing ones as idle (`presence`, they walk to the sofa) and sets `a.live`/`a.ended`/`a.busy` (`status === 'busy'` while Claude thinks/writes a long reply – no JSONL lines then, so `stateOf()` skips the 8 s idle rule and shows `thinking`/the pending tool instead): live leads never hit `GONE_AFTER_MS`, ended ones leave after `IDLE_MS`. Idle live leads earn `EARN.LIVE_IDLE` (0.25 tokens / 10 min), which does **not** count as active time. Busy live leads (`wallet.setLive(ids, busyIds)` → `Earner.busy`) never go idle in `Earner.stateOf()` and earn as `thinking` (or the pending tool). `CLAUDE_SESSIONS_DIR=` overrides (default: sibling of `CLAUDE_PROJECTS_DIR`) – in tests put fake `<pid>.json` with a real pid there.
 Decor: `buildRoom(L, seed, decor)` / `buildPod(seed, lead, decor, team)` read `resolveDecor()`; with defaults the room is **pixel-identical** to the pre-decor version (check: with `?debug`, hash `getImageData` of `__office.room.bg`, every `room.objects[].img` and `podImgs[].back/front` before and after a change, at 1600×900, 632×376@1.25 and 900×560). `prop(name, w, h, fn, variant)` looks up `name@itemId` in tiles.json for non-default items. Dynamic extras: aquarium fish / arcade screen are depth-sorted items in `office.render`; lamp/neon/aquarium/arcade glows in `drawGlows` via `room.lampGlow`, `room.neon`, `room.aquarium`, `room.arcade`.
 Server (`server.js`): static files + `/api/sprites` + `/api/save`; polls JSONL (400 ms, files touched in the last hour; history is not replayed on start). Exports `startServer(port, {reuse})`; runs itself only when executed directly.
-Electron (`electron/main.js` ESM, `electron/preload.cjs`): frameless always-on-top window above the tray, tray menu, Ctrl+Alt+P, notifications on "waiting", start-with-Windows, `prefer-size` auto-widen for 2 teams (user's manual size = `baseSize` minimum). Settings + `desktop.log` in `%APPDATA%\pixel-office\`.
+Electron (`electron/main.js` ESM, `electron/preload.cjs`): frameless always-on-top window above the tray, tray menu, Ctrl+Alt+P, notifications on "waiting", start-with-Windows, `prefer-size` auto-widen for 2 teams (user's manual size = `baseSize` minimum). Settings + `desktop.log` in `%APPDATA%\pixel-office\` (pinned with `app.setPath('userData')`, kept after the rename to Cubicle Crew). Internal ids stay `pixel-office` on purpose for save/settings compatibility: `~/.pixel-office`, `PIXEL_OFFICE_HOME`, `window.pixelOffice`, appId `com.pixeloffice.desktop`. `migrateLoginItem()` repoints an old "Pixel Office.exe" start-with-Windows entry. Releases: `gh release create v<version> release/CubicleCrew-Setup-<version>.exe` on `rezored/cubicle-crew`.
 
 ## Office model (decided with the user)
 - **Team = one Claude Code session** (orchestrator). Lead desk on top (walnut desk, gold nameplate, red chair, ★ label); its sub-agents sit in rows of 3 below it, growing by rows.
@@ -76,4 +76,4 @@ Electron (`electron/main.js` ESM, `electron/preload.cjs`): frameless always-on-t
 3. Cover: 1 team and 2 teams, desktop widget size (`?desktop`, 632×376 @ dpr 1.25), small window (900×560), night (`&time=22:30`).
 4. `?debug` exposes `window.__office` / `window.__model` for state dumps via the `evalJs` argument, and lets you inject events with `__model.ingest({...})` via `preEvalJs`.
 5. Real pipeline: write fake JSONL into a temp `CLAUDE_PROJECTS_DIR` (parent `<sid>.jsonl` + `<sid>/subagents/agent-x.jsonl` + `.meta.json`) and read the WS output.
-Don't kill the user's own `Pixel Office.exe` / port-4317 server without asking.
+Don't kill the user's own `Cubicle Crew.exe` (older installs: `Pixel Office.exe`) / port-4317 server without asking.

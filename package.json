@@ -1,6 +1,6 @@
 {
-  "name": "pixel-office",
-  "version": "1.2.5",
+  "name": "cubicle-crew",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,13 +21,13 @@
     "electron-builder": "^26.15.3"
   },
   "main": "electron/main.js",
-  "description": "Claude Code agents as pixel-art office workers",
+  "description": "Your Claude Code agents, living in a tiny pixel-art office",
   "author": "Kalin Dimitrov",
   "license": "MIT",
   "build": {
     "appId": "com.pixeloffice.desktop",
-    "productName": "Pixel Office",
-    "copyright": "Pixel Office",
+    "productName": "Cubicle Crew",
+    "copyright": "Copyright © 2026 Kalin Dimitrov",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -58,10 +58,15 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Pixel Office",
+      "shortcutName": "Cubicle Crew",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "PixelOffice-Setup-${version}.exe"
+      "artifactName": "CubicleCrew-Setup-${version}.exe"
     }
+  },
+  "homepage": "https://github.com/rezored/cubicle-crew",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rezored/cubicle-crew.git"
   }
 }

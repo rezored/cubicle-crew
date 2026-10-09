@@ -42,7 +42,7 @@ export class Wallet {
       setInterval(() => this.claim(), LOCK_STALE_MS / 3),
     ];
     for (const t of this.timers) t.unref?.();
-    this.log(`портфейл: ${FILE} (${this.owner ? 'броя' : 'само чета – брои друг Pixel Office'})`);
+    this.log(`портфейл: ${FILE} (${this.owner ? 'броя' : 'само чета – брои друг Cubicle Crew'})`);
   }
 
   /** Заключване: само един процес брои и пише. */

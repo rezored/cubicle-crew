@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="docs/media/logo.png" alt="Pixel Office" width="520">
+<img src="docs/media/logo.png" alt="Cubicle Crew" width="520">
 
 ### Your Claude Code agents, living in a tiny pixel-art office.
 
 Every Claude Code session becomes a coworker at a desk. Sub-agents walk in through the door, pick up the task
 and sit down with their team. When someone needs you, the whole room lets you know.
 
-[**▶ Watch the trailer**](docs/media/trailer.mp4) · [Quick start](#quick-start) · [Desktop app](#desktop-widget-windows) · [How it works](#how-it-works)
+[**▶ Watch the trailer**](docs/media/trailer.mp4) · [**⬇ Download for Windows**](https://github.com/rezored/cubicle-crew/releases/latest) · [Quick start](#quick-start) · [Desktop app](#desktop-widget-windows) · [How it works](#how-it-works)
 
-<a href="docs/media/trailer.mp4"><img src="docs/media/demo.gif" alt="Pixel Office in action" width="860"></a>
+<a href="docs/media/trailer.mp4"><img src="docs/media/demo.gif" alt="Cubicle Crew in action" width="860"></a>
 
 </div>
 
@@ -20,7 +20,7 @@ and sit down with their team. When someone needs you, the whole room lets you kn
 Claude Code is happiest when it runs a few sessions at once and hands work to sub-agents. That gets hard to follow
 from a stack of terminal tabs: who is still busy, who is stuck on a question, who quietly finished ten minutes ago?
 
-Pixel Office reads the session logs Claude Code already writes to `~/.claude/projects` and turns them into a live
+Cubicle Crew reads the session logs Claude Code already writes to `~/.claude/projects` and turns them into a live
 scene you can leave open on a second monitor, or pin in the corner of your screen as a widget.
 
 - **One look tells you the state of everything.** Each agent's shirt, monitor glow and name tag take the colour of what it is doing.
@@ -51,8 +51,8 @@ scene you can leave open on a second monitor, or pin in the corner of your scree
 Requires **Node.js 18+**.
 
 ```bash
-git clone https://github.com/rezored/pixel-office.git
-cd pixel-office
+git clone https://github.com/rezored/cubicle-crew.git
+cd cubicle-crew
 npm install
 npm start            # → http://localhost:4317
 ```
@@ -79,9 +79,13 @@ Environment variables: `PORT` (default `4317`), `CLAUDE_PROJECTS_DIR` (default `
 
 ## Desktop widget (Windows)
 
+**Easiest:** grab `CubicleCrew-Setup-<version>.exe` from the [latest release](https://github.com/rezored/cubicle-crew/releases/latest) and run it.
+
+From source:
+
 ```bash
 npm run desktop      # run the Electron app from source
-npm run dist         # build the installer → release/PixelOffice-Setup-<version>.exe
+npm run dist         # build the installer → release/CubicleCrew-Setup-<version>.exe
 ```
 
 The widget runs its own server, so you don't need a browser or `npm start`. It sits in the bottom-right corner above
@@ -89,7 +93,6 @@ the tray and stays on top of other windows. Hover it to show a drag bar with set
 quit buttons. It widens itself when a second team shows up.
 `Ctrl+Alt+P` shows or hides it from anywhere. The tray menu has notifications, start with Windows, demo mode and size reset.
 
-The installer isn't code-signed, so SmartScreen will warn you on first run. Click **More info → Run anyway**.
 
 ## How it works
 
@@ -109,11 +112,20 @@ The installer isn't code-signed, so SmartScreen will warn you on first run. Clic
 - **Client** (`public/`): plain ES modules with no build step. The scene is drawn on a low-resolution canvas and scaled
   up by whole device pixels, so it stays crisp at any DPI. All text is HTML laid over the canvas.
 - **Tokens:** earned on the server every 5 seconds: about 1 per active orchestrator minute, half for sub-agents,
-  plus bonuses for finished tasks. Even if several Pixel Office windows are open, only one of them counts.
+  plus bonuses for finished tasks. Even if several Cubicle Crew windows are open, only one of them counts.
   The save file is written atomically and keeps a backup.
 
 The WebSocket protocol and module map are documented in [`CLAUDE.md`](CLAUDE.md). The token economy and shop design
 are in [`docs/gamification.md`](docs/gamification.md).
+
+## How is this different from Pixel Agents?
+
+[Pixel Agents](https://github.com/pixel-agents-hq/pixel-agents) is a great VS Code extension with a similar idea. Cubicle Crew goes in a different direction:
+
+- **Standalone.** It runs as a desktop widget or in any browser, next to whatever editor or terminal you use, with no VS Code required.
+- **A small idle game.** Your agents earn tokens, and you spend them on furniture, pets and decor. There are also achievements and an avatar.
+- **The office reacts to your whole setup.** Teams per session, a queue in the lounge when more than two sessions work, and a day/night sky that follows your local clock.
+- **Zero assets.** Every sprite and piece of furniture is drawn in code, so there's nothing to buy or download, and you can still drop in your own tileset.
 
 ## Custom sprites
 
@@ -142,4 +154,4 @@ There are no image assets, fonts, CDNs or frameworks: every pixel, from the char
 
 [MIT](LICENSE) © Kalin Dimitrov
 
-<sub>Not affiliated with Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.</sub>
+<sub>Formerly “Pixel Office”. Not affiliated with Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.</sub>

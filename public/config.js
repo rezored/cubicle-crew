@@ -51,7 +51,7 @@ export { TOOL_STATE, DELEGATE_TOOLS } from './rules.js';
 
 // ---- текстове (български по подразбиране) ----
 export const T = {
-  title: 'Pixel Office',
+  title: 'Cubicle Crew',
   connecting: 'свързване…',
   connected: 'свързан',
   waitingActivity: 'Чакам активност от Claude Code…',
@@ -90,7 +90,7 @@ export const T = {
     buy: 'Купи', equip: 'Сложи', equipped: 'Сложено', remove: 'Махни', free: 'безплатно', owned: 'твое',
     need: (n) => `още ${n}`,
     hint: 'Посочи предмет – виждаш го в офиса. Затвори с Esc.',
-    errors: { avatar: 'Невалиден аватар.', funds: 'Нямаш достатъчно токени.', locked: 'Първо го купи.', busy: 'Друг Pixel Office брои токените – опитай пак след малко.', offline: 'Няма връзка със сървъра.' },
+    errors: { avatar: 'Невалиден аватар.', funds: 'Нямаш достатъчно токени.', locked: 'Първо го купи.', busy: 'Друг Cubicle Crew брои токените – опитай пак след малко.', offline: 'Няма връзка със сървъра.' },
     achievement: 'Постижение',
     reward: (n) => `+${n} токена`,
     progress: (v, g) => `${v} / ${g}`,

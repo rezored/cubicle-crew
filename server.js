@@ -264,7 +264,7 @@ function poll() {
   firstScan = false;
 }
 
-/** Пуска сървъра. Зает порт: с reuse – ползва вече работещия Pixel Office; иначе (и при чуждо приложение) – случаен свободен порт. */
+/** Пуска сървъра. Зает порт: с reuse – ползва вече работещия Cubicle Crew; иначе (и при чуждо приложение) – случаен свободен порт. */
 export async function startServer(port = PORT, { reuse = true } = {}) {
   // свободен ли е портът? (проверка с отделен сокет – иначе ws хвърля грешката като необработена)
   const free = (p) => new Promise((res) => {
@@ -285,7 +285,7 @@ export async function startServer(port = PORT, { reuse = true } = {}) {
   else {
     try {
       const r = await fetch(`http://localhost:${port}/api/sprites`);
-      if (r.ok && Array.isArray(await r.json())) return { port, external: true }; // вече върви Pixel Office
+      if (r.ok && Array.isArray(await r.json())) return { port, external: true }; // вече върви Cubicle Crew
     } catch { /* портът е зает от друго приложение */ }
     actual = await listen(0);
   }
@@ -296,7 +296,7 @@ export async function startServer(port = PORT, { reuse = true } = {}) {
   wallet.port = actual;
   wallet.start();
   process.once('exit', () => wallet.close());
-  console.log(`Pixel Office: http://localhost:${actual}   (демо без Claude: /?demo   витрина: /?demo=showcase)`);
+  console.log(`Cubicle Crew: http://localhost:${actual}   (демо без Claude: /?demo   витрина: /?demo=showcase)`);
   console.log(`Следя: ${ROOT}`);
   return { port: actual, external: false };
 }
