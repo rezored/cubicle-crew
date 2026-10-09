@@ -115,7 +115,7 @@ export class Wallet {
       const l = readJson(LOCK);
       if (!l?.port) return { ok: false, error: 'busy' };
       try {
-        const r = await fetch(`http://localhost:${l.port}/api/${kind}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((x) => x.json());
+        const r = await fetch(`http://127.0.0.1:${l.port}/api/${kind}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((x) => x.json());
         if (r.save) { this.save = { ...fresh(), ...r.save }; delete this.save.owner; delete this.save.catalog; this.broadcast(this.msg(0, kind, null, null, true)); }
         return r;
       } catch { return { ok: false, error: 'busy' }; }

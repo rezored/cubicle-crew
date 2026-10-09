@@ -93,7 +93,7 @@ function createWindow() {
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); refreshTray(); } });
   win.webContents.on('did-finish-load', sendState);
   // връзки от страницата се отварят в браузъра, не в приложението
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:\/\//i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
 }
 
 function applyOnTop() { win.setAlwaysOnTop(settings.onTop, 'floating'); sendState(); }

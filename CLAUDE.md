@@ -61,6 +61,7 @@ Electron (`electron/main.js` ESM, `electron/preload.cjs`): frameless always-on-t
 - Parent link priority (server): `subagents/agent-<id>.meta.json` `toolUseId` (exact) → `sessionId`/folder → 15 s heuristic. Child leaves on parent's `tool_end` for its `parent_tool_use_id`, or after 30 s quiet (3 min if last event was an unfinished tool).
 
 ## Gotchas learned the hard way
+- **Security (keep it):** the server binds `127.0.0.1` only (`HOST`), every HTTP request and WebSocket upgrade passes `localReq()` (Host must be localhost/127.0.0.1/[::1], Origin absent or local – blocks other websites and DNS rebinding; browsers allow cross-origin `ws://`, so the WS check matters), bad `%`-escapes → 400, static files must be inside `PUBLIC + sep`. Transcripts created before the server started and first seen later (`claude --resume`) are read from their end, not replayed. Server-to-server calls use `http://127.0.0.1:<port>`; the Electron page keeps `http://localhost` (changing the origin wipes localStorage).
 - `ws` re-emits HTTP `listen` errors as **uncaught exceptions** → `startServer` probes the port with a separate `net` socket first. Don't remove that.
 - Shell heredocs mangle long Python/JS edits with quotes/`\n`; write edit scripts to a file instead.
 - A random server port changes the page origin and wipes `localStorage` prefs → Electron prefers fixed 4318–4320.

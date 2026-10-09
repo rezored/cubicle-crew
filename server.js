@@ -20,6 +20,12 @@ const LINK_WINDOW_MS = 15000;            // евристика: под-аген�
 const DEBUG = !!process.env.DEBUG || process.argv.includes('--debug');
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const SPRITES = path.join(PUBLIC, 'sprites');
+const HOST = '127.0.0.1';                 // само локално – никой от мрежата (Wi-Fi в офиса/кафенето) не вижда сесиите
+const STARTED = Date.now();
+// DNS rebinding: заявка, чийто Host не е локален, идва от чужд домейн, насочен към 127.0.0.1
+const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+const localReq = (req) => LOCAL_HOST.test(req.headers.host || '') && (!req.headers.origin || LOCAL_ORIGIN.test(req.headers.origin));
 
 // ---------- статичен сървър ----------
 const MIME = {
@@ -27,7 +33,9 @@ const MIME = {
   '.png': 'image/png', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp',
 };
 const server = http.createServer((req, res) => {
-  const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (!localReq(req)) { res.writeHead(403).end(); return; }
+  let urlPath;
+  try { urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400).end(); return; } // лош %-код не срива сървъра
   // списък на override спрайтовете – клиентът не прави заявки към липсващи файлове
   if (urlPath === '/api/sprites') {
     let files = [];
@@ -45,7 +53,7 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/api/buy' || urlPath === '/api/equip' || urlPath === '/api/avatar') {
     // само POST с JSON от localhost: чужда страница не може да харчи токените (JSON от друг произход изисква preflight, който не позволяваме)
     const origin = req.headers.origin;
-    if (req.method !== 'POST' || !/^application\/json/.test(req.headers['content-type'] || '') || (origin && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))) { res.writeHead(403).end(); return; }
+    if (req.method !== 'POST' || !/^application\/json/.test(req.headers['content-type'] || '') || (origin && !LOCAL_ORIGIN.test(origin))) { res.writeHead(403).end(); return; }
     let body = '';
     req.on('data', (d) => { body += d; if (body.length > 4096) req.destroy(); });
     req.on('end', async () => {
@@ -58,7 +66,7 @@ const server = http.createServer((req, res) => {
     return;
   }
   const file = path.normalize(path.join(PUBLIC, urlPath === '/' ? 'index.html' : urlPath));
-  if (!file.startsWith(PUBLIC)) { res.writeHead(403).end(); return; }
+  if (file !== PUBLIC && !file.startsWith(PUBLIC + path.sep)) { res.writeHead(403).end(); return; }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404).end(); return; }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
@@ -66,7 +74,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, verifyClient: ({ req }) => localReq(req) });
 wss.on('error', () => { /* грешките при listen се обработват в startServer */ });
 const broadcast = (evt) => {
   const msg = JSON.stringify(evt);
@@ -255,7 +263,8 @@ function poll() {
       try { stat = fs.statSync(file); } catch { continue; }
       if (now - stat.mtimeMs > ACTIVE_WINDOW_MS) continue;
       // при старт не пускаме историята отново, а нови файлове четем от началото
-      st = { pos: firstScan ? stat.size : 0, rest: Buffer.alloc(0) };
+      const old = firstScan || (stat.birthtimeMs || stat.ctimeMs) < STARTED - 5000;
+      st = { pos: old ? stat.size : 0, rest: Buffer.alloc(0) };
       tracked.set(file, st);
       if (DEBUG) console.log('следя', file);
     }
@@ -271,9 +280,9 @@ export async function startServer(port = PORT, { reuse = true } = {}) {
     const probe = net.createServer();
     probe.once('error', () => res(false));
     probe.once('listening', () => probe.close(() => res(true)));
-    probe.listen(p);
+    probe.listen(p, HOST);
   });
-  const listen = (p) => new Promise((res, rej) => { server.once('error', rej); server.listen(p, () => res(server.address().port)); });
+  const listen = (p) => new Promise((res, rej) => { server.once('error', rej); server.listen(p, HOST, () => res(server.address().port)); });
   let actual;
   if (await free(port)) actual = await listen(port);
   else if (!reuse) {
@@ -284,7 +293,7 @@ export async function startServer(port = PORT, { reuse = true } = {}) {
   }
   else {
     try {
-      const r = await fetch(`http://localhost:${port}/api/sprites`);
+      const r = await fetch(`http://127.0.0.1:${port}/api/sprites`);
       if (r.ok && Array.isArray(await r.json())) return { port, external: true }; // вече върви Cubicle Crew
     } catch { /* портът е зает от друго приложение */ }
     actual = await listen(0);
