@@ -3,7 +3,7 @@
 // ?agents=N      – колко оркестратора (главни сесии) в началото; по подразбиране 2 (+ понякога трети, който чака в зоната за почивка)
 import { CFG, PARAMS, T } from './config.js';
 
-const PROJECTS = ['pixel-office', 'api-gateway', 'landing-page', 'data-pipeline', 'mobile-app', 'infra', 'docs-site',
+const PROJECTS = ['cubicle-crew', 'api-gateway', 'landing-page', 'data-pipeline', 'mobile-app', 'infra', 'docs-site',
   'ml-train', 'auth-service', 'design-system', 'billing', 'search', 'analytics', 'cli-tools', 'chat-bot', 'web-shop'];
 const FILES = ['src/app.ts', 'src/components/Header.tsx', 'server/routes/users.js', 'README.md', 'package.json',
   'src/lib/parser.rs', 'tests/api.spec.ts', 'docs/architecture.md', 'src/styles/main.css', 'config/deploy.yml'];
