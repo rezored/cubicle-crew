@@ -49,8 +49,8 @@ export const STATE_ORDER = ['idle', 'thinking', 'typing', 'reading', 'running', 
 // Кой инструмент към кое състояние води – общо със сървъра (rules.js).
 export { TOOL_STATE, DELEGATE_TOOLS } from './rules.js';
 
-// ---- текстове (български по подразбиране) ----
-export const T = {
+// ---- текстове: български (T_BG) и английски (T_EN); езикът – ?lang=, после запомненият избор, после езика на системата ----
+const T_BG = {
   title: 'Cubicle Crew',
   connecting: 'свързване…',
   connected: 'свързан',
@@ -97,7 +97,7 @@ export const T = {
     unlocked: 'отключено',
     avatar: {
       skin: 'Кожа', hair: 'Цвят на косата', glasses: 'Очила', without: 'Без', with: 'С очила',
-      hint: 'Безплатно. Важи за всички оркестратори (★) и остава същият при всяко пускане; под-агентите са различни.',
+      hint: 'Безплатно. Това си ти: първият оркестратор (★) в офиса изглежда така при всяко пускане; останалите са случайни.',
       skins: ['Много светла', 'Светла', 'Средна', 'Мургава', 'Тъмна', 'Много тъмна'],
       hairs: ['Черна', 'Кестенява', 'Светлокестенява', 'Руса', 'Рижа', 'Сива', 'Синя', 'Розова', 'Зелена', 'Лилава'],
     },
@@ -118,8 +118,122 @@ export const T = {
     'shop.10': ['Обзавеждане', 'Купи 10 неща'],
     'shop.all': ['Мечтаният офис', 'Купи всичко от магазина'],
   },
-  tokensHint: 'Токени: печелиш ги, докато агентите работят (скоро – магазин за обзавеждане)',
+  tokensHint: 'Токени: печелиш ги, докато агентите работят – харчиш ги в магазина (B)',
+  lang: 'Език: български – смени на English',
+  winbar: { settings: 'Настройки (размер, известия, демо…)', pin: 'Винаги отгоре', through: 'Кликовете минават през прозореца (махни от менюто в трея)', hide: 'Скрий в трея', quit: 'Затвори' },
+  demo2: { which: 'Кой вариант да избера?', cont: 'Да продължа ли?', whichShort: 'Кой вариант?', arch: 'Прегледай архитектурата', tests: 'Пусни тестовете', cache: 'Измисли план за кеша' },
 };
+
+const T_EN = {
+  title: 'Cubicle Crew',
+  connecting: 'connecting…',
+  connected: 'connected',
+  waitingActivity: 'Waiting for Claude Code activity…',
+  reconnecting: 'connection lost, retrying…',
+  demo: 'DEMO',
+  agents: 'Agents',
+  subagents: 'Sub-agents',
+  toolCalls: 'Tool calls',
+  waitingYou: 'Waiting for you',
+  state: 'State',
+  tool: 'Tool',
+  uptime: 'Active for',
+  project: 'Project',
+  parentOf: 'Sub-agents',
+  childOf: 'Sub-agent of',
+  needsYou: 'Needs you!',
+  thinking: 'thinking…',
+  legendHint: 'L – legend · Esc – clear focus',
+  states: {
+    idle: 'idle', thinking: 'thinking', typing: 'typing', reading: 'reading',
+    running: 'running', delegating: 'delegating', waiting: 'waiting for you',
+  },
+  board: { agents: 'Active agents', tools: 'Tool calls', subs: 'Sub-agents' },
+  min: 'min', sec: 's', hour: 'h',
+  tokens: 'Tokens',
+  shop: {
+    title: 'Shop',
+    open: 'Shop (B)',
+    tabs: { walls: 'Walls', floor: 'Floor & rugs', furniture: 'Furniture', decor: 'Decor', pets: 'Pets', special: 'Special', avatar: 'Avatar', trophies: 'Achievements' },
+    groups: {
+      wall: 'Paint', wainscot: 'Wainscoting', floor: 'Floor', rug: 'Team rug', lrug: 'Lounge rug', sofa: 'Sofa',
+      chair: 'Chairs', lamp: 'Lamp', plants: 'Plants', posters: 'Posters', window: 'Window view',
+      cat: 'Cat', cat2: 'One more cat', neon: 'Neon sign', espresso: 'Coffee machine', aquarium: 'Aquarium', arcade: 'Arcade',
+    },
+    slots: { 'rug.team0': 'Team 1', 'rug.team1': 'Team 2', 'chair.team0': 'Team 1', 'chair.team1': 'Team 2', 'chair.lead': '★ Leads' },
+    buy: 'Buy', equip: 'Use', equipped: 'In use', remove: 'Remove', free: 'free', owned: 'owned',
+    need: (n) => `${n} more`,
+    hint: 'Hover an item to preview it in the office. Esc closes.',
+    errors: { avatar: 'Invalid avatar.', funds: 'Not enough tokens.', locked: 'Buy it first.', busy: 'Another Cubicle Crew is counting tokens – try again in a moment.', offline: 'No connection to the server.' },
+    achievement: 'Achievement',
+    reward: (n) => `+${n} tokens`,
+    progress: (v, g) => `${v} / ${g}`,
+    unlocked: 'unlocked',
+    avatar: {
+      skin: 'Skin', hair: 'Hair colour', glasses: 'Glasses', without: 'None', with: 'Glasses',
+      hint: 'Free. This is you: the first orchestrator (★) in the office always looks like this; everyone else is random.',
+      skins: ['Very light', 'Light', 'Medium', 'Tan', 'Dark', 'Very dark'],
+      hairs: ['Black', 'Brown', 'Light brown', 'Blonde', 'Ginger', 'Grey', 'Blue', 'Pink', 'Green', 'Purple'],
+    },
+  },
+  achievements: {
+    'tokens.100': ['First 100', 'Earn 100 tokens'],
+    'tokens.1k': ['Grand', 'Earn 1,000 tokens'],
+    'tokens.5k': ['Full vault', 'Earn 5,000 tokens'],
+    'tokens.20k': ['Tycoon', 'Earn 20,000 tokens'],
+    'tasks.10': ['First team', '10 sub-agent tasks'],
+    'tasks.100': ['Manager', '100 sub-agent tasks'],
+    'tasks.500': ['Director', '500 sub-agent tasks'],
+    'hours.10': ['Workday', '10 hours of active agents'],
+    'hours.100': ['Veteran', '100 hours of active agents'],
+    'days.7': ['One week', 'Active on 7 days'],
+    'days.30': ['One month', 'Active on 30 days'],
+    'shop.1': ['First purchase', 'Buy something in the shop'],
+    'shop.10': ['Furnished', 'Buy 10 things'],
+    'shop.all': ['Dream office', 'Buy everything in the shop'],
+  },
+  tokensHint: 'Tokens: earned while your agents work – spend them in the shop (B)',
+  lang: 'Language: English – switch to български',
+  winbar: { settings: 'Settings (size, notifications, demo…)', pin: 'Always on top', through: 'Click-through (turn it off from the tray menu)', hide: 'Hide to tray', quit: 'Quit' },
+  demo2: { which: 'Which option should I pick?', cont: 'Shall I continue?', whichShort: 'Which option?', arch: 'Review the architecture', tests: 'Run the tests', cache: 'Plan the cache' },
+  // имена на предметите (catalog.js пази българските; id-тата са записът и не се пипат)
+  items: {
+    'wall.slate': 'Slate blue', 'wall.sage': 'Sage', 'wall.terracotta': 'Terracotta', 'wall.charcoal': 'Charcoal', 'wall.navy': 'Navy',
+    'wall.cream': 'Cream', 'wall.lavender': 'Lavender', 'wall.forest': 'Forest green',
+    'wainscot.dark': 'Dark panels', 'wainscot.white': 'White panels', 'wainscot.wood': 'Wood panels',
+    'floor.oak': 'Oak', 'floor.birch': 'Birch', 'floor.walnut': 'Walnut', 'floor.checker': 'Checker tiles', 'floor.concrete': 'Concrete (loft)',
+    'rug.plain.blue': 'Blue', 'rug.plain.green': 'Green', 'rug.plain.plum': 'Plum', 'rug.stripes': 'Striped', 'rug.round': 'Round', 'rug.persian': 'Persian',
+    'lrug.red': 'Red', 'lrug.boho': 'Boho', 'lrug.fluffy': 'Fluffy white',
+    'sofa.modern.teal': 'Modern – teal', 'sofa.modern.mustard': 'Modern – mustard', 'sofa.modern.coral': 'Modern – coral', 'sofa.modern.navy': 'Modern – navy',
+    'sofa.modern.forest': 'Modern – green', 'sofa.modern.grey': 'Modern – grey', 'sofa.modern.pink': 'Modern – pink', 'sofa.beanbags': 'Beanbags', 'sofa.chesterfield': 'Chesterfield',
+    'chair.navy': 'Navy', 'chair.red': 'Red', 'chair.green': 'Green', 'chair.purple': 'Purple', 'chair.orange': 'Orange', 'chair.black': 'Black',
+    'chair.white': 'White', 'chair.gaming': 'Gaming', 'chair.throne': 'Throne',
+    'plants.ficus': 'Ficus', 'plants.cactus': 'Cacti', 'plants.monstera': 'Monstera', 'plants.flowers': 'Flowering',
+    'posters.classic': 'Classic', 'posters.space': 'Space', 'posters.nature': 'Nature', 'posters.code': 'Code',
+    'lamp.floor': 'Floor lamp', 'lamp.arc': 'Arc lamp',
+    'cat.grey': 'Grey cat', 'cat.ginger': 'Ginger cat', 'cat.black': 'Black cat', 'cat.white': 'White cat', 'cat2.tabby': 'Second cat',
+    'window.city': 'City', 'window.sea': 'Sea', 'window.mountains': 'Mountains',
+    'neon.code': 'Neon sign', 'espresso.pro': 'Espresso machine', 'aquarium.reef': 'Aquarium', 'arcade.retro': 'Arcade cabinet',
+  },
+};
+
+function pickLang() {
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'bg') { try { localStorage.setItem('po.lang', q); } catch { /* */ } return q; }
+  } catch { /* */ }
+  try { const v = localStorage.getItem('po.lang'); if (v === 'en' || v === 'bg') return v; } catch { /* */ }
+  return /^bg\b/i.test(globalThis.navigator?.language || '') ? 'bg' : 'en';
+}
+export const LANG = pickLang();
+export const T = LANG === 'bg' ? T_BG : T_EN;
+/** Име на предмет от магазина на текущия език. */
+export const itemName = (it) => T.items?.[it.id] || it.name;
+/** Смяна на езика: запомня избора и презарежда (T е константа за цялата страница). */
+export function setLang(l) {
+  try { localStorage.setItem('po.lang', l); } catch { /* */ }
+  const u = new URL(location.href); u.searchParams.set('lang', l); location.href = u.toString();
+}
 
 // ---- URL параметри ----
 const Q = new URLSearchParams(location.search);

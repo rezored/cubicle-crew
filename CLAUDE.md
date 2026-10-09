@@ -21,14 +21,14 @@ There is no build step for the client and no test framework. `node --check <file
 - **No external assets/CDN/fonts, works offline, no client build step** (plain ES modules in `public/`).
 - **WebSocket protocol:** only ever *add optional* fields. Event: `{agent, label, subagent, ts, type: tool_start|tool_end|say|user_prompt, id, tool, detail, tool_use_id}` + optional `parent, parent_tool_use_id, background, desc, link`.
 - **State colours are the visual language:** idle `#6b6b80`, thinking `#e0c24a`, typing `#4ac26b`, reading `#4a8fe0`, running `#e07a4a`, delegating `#b04ae0`, waiting `#e04a6b` (`STATES` in `public/config.js`).
-- **UI strings are Bulgarian** (`T` in `config.js`); code comments in this repo are Bulgarian too – match it.
+- **UI is bilingual:** `T_BG` / `T_EN` in `config.js` (`T` = the active one, `LANG`, `setLang()`, `itemName(it)` for shop items – `catalog.js` keeps the Bulgarian names, English ones are in `T_EN.items`). Language: `?lang=en|bg` → saved `localStorage po.lang` → system language (`bg*` → bg, else en); HUD chip БГ/EN; Electron: tray submenu "Language", `settings.lang`, passes `&lang=` to the page (the HUD chip in the app sends `action("lang:xx")`). **Every new UI string goes into both.** Code comments in this repo are Bulgarian – match it.
 - **All text is DOM** over the canvas (crisp, Cyrillic). The 3x5 `pixelfont.js` is only for digits/symbols inside the scene.
 - **Integer pixel scaling** in *device* pixels: canvas is logical size (e.g. 640×360), CSS size = W*scale/dpr.
 - Keep `?demo` and `?demo=showcase` working; they are how features get checked without real sessions.
 - The procedural art must stay **override-able** by PNGs (`public/sprites/characters.png`, `tiles.png`+`tiles.json`); new props should go through `prop(name, …)` in `environment.js` so a tileset can replace them.
 
 ## Architecture (public/)
-- `config.js` – `CFG` constants, `STATES`, `T` strings, URL `PARAMS` (`demo, debug, agents, time, wander, seed, desktop`); re-exports `TOOL_STATE`/`DELEGATE_TOOLS` from `rules.js`.
+- `config.js` – `CFG` constants, `STATES`, `T` strings (`T_BG`/`T_EN`), URL `PARAMS` (`demo, debug, agents, time, wander, seed, desktop`); re-exports `TOOL_STATE`/`DELEGATE_TOOLS` from `rules.js`.
 - `rules.js` – **shared with the server** (no DOM/`location`!): `TOOL_STATE`, `EARN` weights/bonuses, `Earner` (events → whole tokens per agent + bonuses).
 - `tokens.js` – client wallet: HUD chip, whiteboard plaque (`office.tokens`), `+N` particles (≤1 per agent / 20 s, bonuses immediate), `drawCoin`; applies `equipped` → `office.setDecor()` (or the shop's `setPreview`); `backend` = server POSTs or `demoWallet` (in-memory, 10× rate, starts with 600 / 1240).
 - `catalog.js` – **shared with the server**: `SLOTS` (slot → group + free default; `def: null` = on/off item), `ITEMS` (id, group, price, Bulgarian name, colours/style), `TABS`, `ACHIEVEMENTS`, `buyItem`/`equipItem`/`grantAchievements`, `resolveDecor(equipped)`. **Item ids are save data – never rename.** New item = one line here + (for a new style) a branch in the matching draw function in `environment.js` + thumbnail case in `thumb()`.

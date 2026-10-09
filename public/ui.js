@@ -1,6 +1,6 @@
 // Целият текст е DOM (остър при всякакъв мащаб и с кирилица): етикети, балончета,
 // подсказки при посочване, HUD, легенда и ?debug панел.
-import { CFG, STATES, STATE_ORDER, T, PARAMS } from './config.js';
+import { CFG, STATES, STATE_ORDER, T, PARAMS, LANG, setLang } from './config.js';
 import { shortDetail, fmtDuration } from './util.js';
 import { coinUrl } from './tokens.js';
 
@@ -26,7 +26,14 @@ export class UI {
     this.buildLegend();
     this.bindMouse();
     // монетата в HUD отваря магазина (onShop се задава в main.js)
-    this.hud.addEventListener('click', (e) => { if (e.target.closest('.tok')) this.onShop?.(); });
+    this.hud.addEventListener('click', (e) => {
+      if (e.target.closest('.tok')) this.onShop?.();
+      else if (e.target.closest('.lang')) {
+        const l = LANG === 'bg' ? 'en' : 'bg';
+        if (PARAMS.desktop && window.pixelOffice?.action) window.pixelOffice.action('lang:' + l); else setLang(l);
+      }
+    });
+    document.documentElement.lang = LANG;
     if (PARAMS.debug) this.debugEl.hidden = false;
     if (PARAMS.desktop) this.initDesktop();
   }
@@ -39,6 +46,7 @@ export class UI {
     try { stored = localStorage.getItem('po.legend'); } catch { /* */ }
     if (stored == null) this.legend.hidden = true; // в малкия прозорец легендата е скрита по подразбиране (L я показва)
     const bar = document.getElementById('winbar');
+    for (const b of bar.querySelectorAll('button[data-act]')) if (T.winbar[b.dataset.act]) b.title = T.winbar[b.dataset.act];
     bar.addEventListener('click', (e) => {
       const act = e.target.closest('button')?.dataset.act;
       if (act && bridge) bridge.action(act);
@@ -265,7 +273,8 @@ export class UI {
       `<span>${T.agents} <b>${s.agents - s.subs}</b></span>` +
       `<span>${T.subagents} <b>${s.subs}</b></span>` +
       `<span>${T.toolCalls} <b>${s.tools}</b></span>` +
-      (s.waiting ? `<span class="alert">${T.waitingYou} <b>${s.waiting}</b></span>` : '');
+      (s.waiting ? `<span class="alert">${T.waitingYou} <b>${s.waiting}</b></span>` : '') +
+      `<span class="lang" title="${T.lang}">${LANG === 'bg' ? 'БГ' : 'EN'}</span>`;
     if (this.hud._html !== html) { this.hud.innerHTML = html; this.hud._html = html; }
     const title = s.waiting ? `(${s.waiting}) ${T.needsYou} · ${T.title}` : T.title;
     if (document.title !== title) document.title = title;
@@ -275,7 +284,7 @@ export class UI {
     this.sendDesktopStats(s);
   }
 
-  fmtTokens() { return this.tokens.toLocaleString('bg-BG'); }
+  fmtTokens() { return this.tokens.toLocaleString(LANG === 'bg' ? 'bg-BG' : 'en-US'); }
 
   updateDebug(now) {
     const L = this.office.L;

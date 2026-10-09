@@ -29,7 +29,7 @@ let quitting = false;
 
 // ---------------------------------------------------------------- настройки
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
-let settings = { bounds: null, onTop: true, through: false, demo: false, notify: true, autoSize: true };
+let settings = { bounds: null, onTop: true, through: false, demo: false, notify: true, autoSize: true, lang: null };
 let programmatic = 0; // setBounds от нас – да не се брои като ръчно преоразмеряване
 function loadSettings() {
   try { settings = { ...settings, ...JSON.parse(fs.readFileSync(settingsFile(), 'utf8')) }; } catch { /* първо пускане */ }
@@ -55,7 +55,21 @@ function visible(b) {
 }
 
 // ---------------------------------------------------------------- прозорец
-function pageUrl() { return `http://localhost:${port}/?desktop${settings.demo ? '&demo' : ''}`; }
+// език: изричен избор от менюто, иначе езикът на Windows (български -> bg, всичко друго -> en)
+const lang = () => settings.lang || (/^bg/i.test(app.getLocale() || '') ? 'bg' : 'en');
+const L = {
+  bg: { hide: 'Скрий', show: 'Покажи', shop: 'Магазин', onTop: 'Винаги отгоре', through: 'Кликовете минават през прозореца', notify: 'Известие, когато агент чака',
+    autoSize: 'Разширявай при втори екип', demo: 'Демо режим', login: 'Стартирай с Windows', lang: 'Език / Language', resetSize: 'Нулирай размера',
+    resetPlace: 'Върни на мястото над трея', browser: 'Отвори в браузъра', quit: 'Изход',
+    tip: (a, s, w) => `агенти ${a} · под-агенти ${s}${w ? ` · чакат те ${w}` : ''}`, one: (n) => `${n} чака теб`, many: (k) => `${k} агента чакат теб` },
+  en: { hide: 'Hide', show: 'Show', shop: 'Shop', onTop: 'Always on top', through: 'Click-through', notify: 'Notify when an agent is waiting',
+    autoSize: 'Widen for a second team', demo: 'Demo mode', login: 'Start with Windows', lang: 'Language / Език', resetSize: 'Reset size',
+    resetPlace: 'Move back above the tray', browser: 'Open in browser', quit: 'Quit',
+    tip: (a, s, w) => `agents ${a} · sub-agents ${s}${w ? ` · waiting for you ${w}` : ''}`, one: (n) => `${n} is waiting for you`, many: (k) => `${k} agents are waiting for you` },
+};
+const tr = () => L[lang()];
+function setLang(l) { settings.lang = l; saveSettings(); win?.loadURL(pageUrl()); refreshTray(); }
+function pageUrl() { return `http://localhost:${port}/?desktop${settings.demo ? '&demo' : ''}&lang=${lang()}`; }
 
 function createWindow() {
   const b = visible(settings.bounds) ? settings.bounds : defaultBounds();
@@ -148,23 +162,27 @@ function resetPlace() {
 
 // едно и също меню: в трея и от бутона ⚙ в прозореца
 function menuTemplate() {
-  const li = loginItem();
+  const li = loginItem(), t = tr();
   return [
-    { label: win?.isVisible() ? 'Скрий' : 'Покажи', accelerator: SHORTCUT, click: () => toggleWindow() },
-    { label: 'Магазин', click: () => { toggleWindow(true); win.focus(); win.webContents.send('open-shop'); } },
+    { label: win?.isVisible() ? t.hide : t.show, accelerator: SHORTCUT, click: () => toggleWindow() },
+    { label: t.shop, click: () => { toggleWindow(true); win.focus(); win.webContents.send('open-shop'); } },
     { type: 'separator' },
-    { label: 'Винаги отгоре', type: 'checkbox', checked: settings.onTop, click: (m) => { settings.onTop = m.checked; applyOnTop(); saveSettings(); } },
-    { label: 'Кликовете минават през прозореца', type: 'checkbox', checked: settings.through, click: (m) => { settings.through = m.checked; applyThrough(); saveSettings(); } },
-    { label: 'Известие, когато агент чака', type: 'checkbox', checked: settings.notify, click: (m) => { settings.notify = m.checked; saveSettings(); } },
-    { label: 'Разширявай при втори екип', type: 'checkbox', checked: settings.autoSize, click: (m) => { settings.autoSize = m.checked; saveSettings(); if (m.checked) win.webContents.reload(); } },
-    { label: 'Демо режим', type: 'checkbox', checked: settings.demo, click: (m) => { settings.demo = m.checked; saveSettings(); win.loadURL(pageUrl()); } },
-    { label: 'Стартирай с Windows', type: 'checkbox', checked: li.get(), click: (m) => li.set(m.checked) },
+    { label: t.onTop, type: 'checkbox', checked: settings.onTop, click: (m) => { settings.onTop = m.checked; applyOnTop(); saveSettings(); } },
+    { label: t.through, type: 'checkbox', checked: settings.through, click: (m) => { settings.through = m.checked; applyThrough(); saveSettings(); } },
+    { label: t.notify, type: 'checkbox', checked: settings.notify, click: (m) => { settings.notify = m.checked; saveSettings(); } },
+    { label: t.autoSize, type: 'checkbox', checked: settings.autoSize, click: (m) => { settings.autoSize = m.checked; saveSettings(); if (m.checked) win.webContents.reload(); } },
+    { label: t.demo, type: 'checkbox', checked: settings.demo, click: (m) => { settings.demo = m.checked; saveSettings(); win.loadURL(pageUrl()); } },
+    { label: t.login, type: 'checkbox', checked: li.get(), click: (m) => li.set(m.checked) },
+    { label: t.lang, submenu: [
+      { label: 'English', type: 'radio', checked: lang() === 'en', click: () => setLang('en') },
+      { label: 'Български', type: 'radio', checked: lang() === 'bg', click: () => setLang('bg') },
+    ] },
     { type: 'separator' },
-    { label: 'Нулирай размера', click: resetSize },
-    { label: 'Върни на мястото над трея', click: resetPlace },
-    { label: 'Отвори в браузъра', click: () => shell.openExternal(`http://localhost:${port}/`) },
+    { label: t.resetSize, click: resetSize },
+    { label: t.resetPlace, click: resetPlace },
+    { label: t.browser, click: () => shell.openExternal(`http://localhost:${port}/?lang=${lang()}`) },
     { type: 'separator' },
-    { label: 'Изход', click: () => { quitting = true; app.quit(); } },
+    { label: t.quit, click: () => { quitting = true; app.quit(); } },
   ];
 }
 
@@ -172,7 +190,7 @@ function refreshTray() {
   if (!tray) return;
   const w = stats.waiting.length;
   tray.setImage(trayIcon(w > 0));
-  tray.setToolTip(`Cubicle Crew — агенти ${stats.agents} · под-агенти ${stats.subs}${w ? ` · чакат те ${w}` : ''}`);
+  tray.setToolTip(`Cubicle Crew — ${tr().tip(stats.agents, stats.subs, w)}`);
   tray.setContextMenu(Menu.buildFromTemplate(menuTemplate()));
 }
 
@@ -180,6 +198,7 @@ function refreshTray() {
 ipcMain.on('action', (_e, act) => {
   if (act === 'hide') toggleWindow(false);
   else if (act === 'quit') { quitting = true; app.quit(); }
+  else if (act === 'lang:en' || act === 'lang:bg') setLang(act.slice(5));
   else if (act === 'pin') { settings.onTop = !settings.onTop; applyOnTop(); saveSettings(); refreshTray(); }
   else if (act === 'through') { settings.through = true; applyThrough(); saveSettings(); refreshTray(); }
   else if (act === 'settings') Menu.buildFromTemplate(menuTemplate()).popup({ window: win });
@@ -230,7 +249,7 @@ ipcMain.on('stats', (_e, s) => {
   stats = { agents: s.agents | 0, subs: s.subs | 0, tools: s.tools | 0, waiting: Array.isArray(s.waiting) ? s.waiting.map(String).slice(0, 20) : [] };
   const fresh = stats.waiting.filter((n) => !before.has(n));
   if (fresh.length && settings.notify && Notification.isSupported() && !win.isFocused()) {
-    const n = new Notification({ title: 'Cubicle Crew', body: fresh.length === 1 ? `${fresh[0]} чака теб` : `${fresh.length} агента чакат теб`, silent: false });
+    const n = new Notification({ title: 'Cubicle Crew', body: fresh.length === 1 ? tr().one(fresh[0]) : tr().many(fresh.length), silent: false });
     n.on('click', () => { toggleWindow(true); win.focus(); });
     n.show();
   }

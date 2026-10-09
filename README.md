@@ -77,6 +77,8 @@ Environment variables: `PORT` (default `4317`), `CLAUDE_PROJECTS_DIR` (default `
 **Controls:** hover a character for details, click to focus it (spotlight and info card), `L` toggles the legend,
 `B` opens the shop and `Esc` clears the focus.
 
+**Language:** English or Bulgarian. It follows your system language. To switch, click the `EN`/`БГ` chip in the HUD, add `?lang=en` or `?lang=bg` to the URL, or use the tray menu in the desktop app.
+
 ## Desktop widget (Windows)
 
 **Easiest:** grab `CubicleCrew-Setup-<version>.exe` from the [latest release](https://github.com/rezored/cubicle-crew/releases/latest) and run it.
@@ -138,7 +140,6 @@ Drop PNGs into `public/sprites/` and reload the page:
 
 ## Known limitations
 
-- The UI text is currently in **Bulgarian**. All strings live in one object (`T` in `public/config.js`), so a translation is easy to add.
 - The JSONL transcript format isn't an official API. If parsing ever breaks, `npm run debug` shows what's happening.
 - Without the session status (older Claude Code versions), an agent counts as idle after 8 seconds without new transcript lines, so long thinking looks like a break.
 - `waiting` only comes from `AskUserQuestion`. Tool permission prompts don't show up in the transcript.

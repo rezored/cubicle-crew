@@ -1,6 +1,6 @@
 // Магазин: DOM панел (острия текст, кирилица) с раздели; посочен предмет се вижда веднага в офиса (преглед),
 // покупките минават през сървъра (или демо портфейла) – правилата са в catalog.js.
-import { T } from './config.js';
+import { T, itemName, LANG } from './config.js';
 import { ITEMS, TABS, SLOTS, GROUP_SLOTS, ACHIEVEMENTS, owns, avatarOf } from './catalog.js';
 import { CharacterSprites, avatarLook } from './sprites.js';
 import { SKINS, HAIRS } from './palette.js';
@@ -10,7 +10,7 @@ import { coinUrl } from './tokens.js';
 import { makeCanvas } from './util.js';
 
 const el = (tag, cls, parent, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
-const fmt = (n) => Number(n).toLocaleString('bg-BG');
+const fmt = (n) => Number(n).toLocaleString(LANG === 'bg' ? 'bg-BG' : 'en-US');
 
 function catThumb(it) {
   const c = makeCanvas(18, 14), g = c.getContext('2d');
@@ -119,7 +119,7 @@ export class Shop {
       const card = el('div', `card${have ? ' owned' : ''}${where.length ? ' on' : ''}`, grid);
       card.dataset.id = it.id;
       card.appendChild(this.thumb(it));
-      el('div', 'nm', card, it.name);
+      el('div', 'nm', card, itemName(it));
       const price = it.price === 0 ? T.shop.free : have ? T.shop.owned : `<i style="background-image:url(${this.coin})"></i>${fmt(it.price)}`;
       el('div', 'pr', card, price);
       const act = el('div', 'act', card);

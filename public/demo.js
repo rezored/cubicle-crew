@@ -1,7 +1,7 @@
 // ?demo          – симулация: всички състояния, делегиране родител/дете, идват и си тръгват агенти
 // ?demo=showcase – всеки агент стои в едно състояние (за преглед/скрийншоти)
 // ?agents=N      – колко оркестратора (главни сесии) в началото; по подразбиране 2 (+ понякога трети, който чака в зоната за почивка)
-import { CFG, PARAMS } from './config.js';
+import { CFG, PARAMS, T } from './config.js';
 
 const PROJECTS = ['pixel-office', 'api-gateway', 'landing-page', 'data-pipeline', 'mobile-app', 'infra', 'docs-site',
   'ml-train', 'auth-service', 'design-system', 'billing', 'search', 'analytics', 'cli-tools', 'chat-bot', 'web-shop'];
@@ -68,7 +68,7 @@ export function startDemo(ingest, model) {
   async function life(a, first) {
     // първо действие – така че всички състояния да се видят веднага
     if (first === 'typing' || first === 'reading' || first === 'running') { const [t, d] = toolFor(first); await tool(a, t, d, rand(4000, 6000)); }
-    else if (first === 'waiting') await tool(a, 'AskUserQuestion', 'Кой вариант да избера?', rand(7000, 9000));
+    else if (first === 'waiting') await tool(a, 'AskUserQuestion', T.demo2.which, rand(7000, 9000));
     else if (first === 'delegating') await delegate(a);
     else if (first === 'thinking') await think(a, 5000);
     else if (first === 'idle') { emit(a, { type: 'say' }); await sleep(rand(CFG.IDLE_MS + CFG.WANDER_AFTER_MS + 8000, CFG.IDLE_MS + CFG.WANDER_AFTER_MS + 16000)); }
@@ -77,7 +77,7 @@ export function startDemo(ingest, model) {
       if (a.stop) break;
       const r = Math.random();
       if (r < 0.07) await sleep(rand(CFG.IDLE_MS + 2000, CFG.IDLE_MS + CFG.WANDER_AFTER_MS + 12000)); // пауза -> почивка
-      else if (r < 0.14) await tool(a, 'AskUserQuestion', 'Да продължа ли?', rand(5000, 9000));
+      else if (r < 0.14) await tool(a, 'AskUserQuestion', T.demo2.cont, rand(5000, 9000));
       else if (r < 0.40) await delegate(a);
       else if (r < 0.45) await think(a, rand(6500, 9000)); // дълго мислене -> разхожда се
       else {
@@ -118,7 +118,7 @@ function showcase(ingest) {
   const start = (emit, tool, detail, id) => (tool ? emit({ type: 'tool_start', id, tool, detail }) : emit({ type: 'say' }));
   const teams = [
     { id: 'show-lead-a', label: 'web-shop', tool: 'Edit', detail: 'src/components/Cart.tsx',
-      kids: [['Read', 'docs/architecture.md', 'Прегледай архитектурата'], ['Bash', 'npm test -- --coverage', 'Пусни тестовете'], [null, null, 'Измисли план за кеша']] },
+      kids: [['Read', 'docs/architecture.md', T.demo2.arch], ['Bash', 'npm test -- --coverage', T.demo2.tests], [null, null, T.demo2.cache]] },
     { id: 'show-lead-b', label: 'api-gateway', tool: 'Agent', detail: 'Explore auth flow',
       kids: [['Write', 'src/auth/session.ts', 'Explore auth flow (1)'], ['Grep', 'auth|session', 'Explore auth flow (2)']] },
   ];
@@ -135,7 +135,7 @@ function showcase(ingest) {
   }
   // трета сесия, която чака теб, и четвърта, която почива – и двете в зоната за почивка
   const w = agent('show-waiting', 'billing');
-  setTimeout(() => { w({ type: 'tool_start', id: 't-w', tool: 'AskUserQuestion', detail: 'Кой вариант?' }); keep(w); }, 400);
+  setTimeout(() => { w({ type: 'tool_start', id: 't-w', tool: 'AskUserQuestion', detail: T.demo2.whichShort }); keep(w); }, 400);
   const idle = agent('show-idle', 'infra');
   setTimeout(() => idle({ type: 'say' }), 500);
 }
