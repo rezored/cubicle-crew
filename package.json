@@ -1,0 +1,67 @@
+{
+  "name": "pixel-office",
+  "version": "1.2.4",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "debug": "node server.js --debug",
+    "desktop": "electron .",
+    "icon": "node scripts/make-icon.mjs",
+    "dist": "electron-builder --win nsis"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "main": "electron/main.js",
+  "description": "Claude Code agents as pixel-art office workers",
+  "author": "Kalin Dimitrov",
+  "license": "MIT",
+  "build": {
+    "appId": "com.pixeloffice.desktop",
+    "productName": "Pixel Office",
+    "copyright": "Pixel Office",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "server.js",
+      "wallet.js",
+      "electron/**",
+      "public/**",
+      "!public/sprites/*.psd"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pixel Office",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "PixelOffice-Setup-${version}.exe"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+node_modules/
+out/
+release/
+dist/
+*.zip
+.idea/
+*.log
+public/sprites/*.psd

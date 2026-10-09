@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Office</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --pod: 144px; --bubble-max: 180px; --label-max: 130px;
+    --ui-bg: rgba(18, 14, 28, 0.86); --ui-border: #3a3452; --ui-text: #e8e2f8; --ui-dim: #9a92b8;
+    --font: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, "DejaVu Sans Mono", ui-monospace, monospace;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0e0c14; color: var(--ui-text); font: 13px/1.35 var(--font); }
+  #stage { position: fixed; left: 0; top: 0; }
+  #c { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  #overlay { position: absolute; left: 0; top: 0; pointer-events: none; overflow: hidden; }
+
+  /* етикет под бюрото */
+  .tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 4px; max-width: var(--label-max);
+    padding: 1px 6px 2px; border-radius: 3px; background: rgba(14, 10, 22, 0.78); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px; line-height: 15px; white-space: nowrap; color: #ece6fa; will-change: transform; transition: opacity .3s; }
+  .tag i { flex: none; width: 7px; height: 7px; border-radius: 1px; box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+  .tag .n { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .tag .s { flex: none; color: var(--ui-dim); font-size: 11px; }
+  .tag[data-state="waiting"] { background: #e04a6b; border-color: #ff9ab0; animation: pulse 0.64s steps(2) infinite; }
+  .tag[data-state="waiting"] .s { color: #fff; font-weight: 600; }
+  .tag.focus { outline: 2px solid #fff; }
+
+  /* балонче над главата */
+  .bubble { position: absolute; left: 0; top: 0; max-width: var(--bubble-max); padding: 2px 7px 3px; border-radius: 3px;
+    background: #f6f3ea; color: #1d1626; border: 2px solid #1d1626; box-shadow: 2px 2px 0 rgba(0,0,0,.35);
+    font: 12px/15px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .25s; will-change: transform; }
+  .bubble.show { opacity: 1; }
+  .bubble b { font-weight: 700; margin-right: 5px; }
+  .bubble[data-state="typing"] { border-left: 5px solid #4ac26b; }
+  .bubble[data-state="reading"] { border-left: 5px solid #4a8fe0; }
+  .bubble[data-state="running"] { border-left: 5px solid #e07a4a; }
+  .bubble[data-state="delegating"] { border-left: 5px solid #b04ae0; }
+  .bubble[data-state="waiting"] { background: #e04a6b; color: #fff; border-color: #2a0a14; font-family: var(--font); font-weight: 600; }
+  @keyframes pulse { 50% { filter: brightness(1.35); } }
+
+  /* HUD */
+  #hud { position: fixed; left: 8px; bottom: 8px; max-width: 48vw; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+  #hud span { background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 3px; padding: 2px 8px; box-shadow: 2px 2px 0 rgba(0,0,0,.3); }
+  #hud b { color: #fff; }
+  #hud .conn i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #e0c24a; vertical-align: 0; }
+  #hud .conn.connected i { background: #4ac26b; box-shadow: 0 0 6px #4ac26b; }
+  #hud .conn.down i { background: #e04a6b; }
+  #hud .conn.demo i { background: #b04ae0; }
+  #hud .alert { background: #e04a6b; border-color: #ff9ab0; animation: pulse .64s steps(2) infinite; }
+  /* токени: монетата е 5x5 пиксела, рисувана в tokens.js */
+  #hud .tok { border-color: #7a5410; }
+  #hud .tok i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; background-size: 100% 100%; image-rendering: pixelated; }
+  #hud .tok b { color: #ffe27a; }
+  #hud .tok.gain { background: #5a4214; border-color: #f0c840; }
+
+  #legend { position: fixed; right: 8px; bottom: 8px; justify-content: flex-end; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center;
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 3px; padding: 3px 9px; font-size: 12px; pointer-events: none; max-width: 46vw; }
+  #legend span { display: inline-flex; align-items: center; gap: 4px; }
+  #legend i { width: 9px; height: 9px; display: inline-block; border-radius: 1px; }
+  #legend em { color: var(--ui-dim); font-style: normal; font-size: 11px; }
+
+  #tooltip, #card { position: fixed; left: 0; top: 0; z-index: 5; pointer-events: none; min-width: 180px; max-width: 320px;
+    background: var(--ui-bg); border: 1px solid #5a5278; border-radius: 4px; padding: 6px 9px; box-shadow: 3px 3px 0 rgba(0,0,0,.35); font-size: 12px; }
+  #card { left: auto; right: 8px; top: 8px; border-color: #fff; }
+  #tooltip table, #card table { border-collapse: collapse; }
+  #tooltip th, #card th { text-align: left; font-weight: 400; color: var(--ui-dim); padding: 1px 10px 1px 0; vertical-align: top; white-space: nowrap; }
+  #tooltip td, #card td { padding: 1px 0; overflow-wrap: anywhere; }
+  .title { font-weight: 600; margin-bottom: 4px; }
+  .dim { color: var(--ui-dim); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 1px; margin-right: 5px; }
+
+  #empty { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--ui-bg); border: 1px solid var(--ui-border);
+    padding: 8px 14px; border-radius: 4px; font-size: 14px; pointer-events: none; box-shadow: 3px 3px 0 rgba(0,0,0,.35); }
+  #debug { position: fixed; right: 8px; bottom: 44px; max-width: 560px; background: rgba(0,0,0,.8); color: #9fe0a0; font: 11px/1.3 var(--mono);
+    padding: 6px 8px; border-radius: 3px; pointer-events: none; z-index: 6; }
+  #debug pre { margin: 4px 0 0; white-space: pre; overflow: hidden; }
+  #atlas { position: fixed; inset: 0; overflow: auto; background: #2a2838; z-index: 10; display: flex; gap: 12px; padding: 12px; align-items: flex-start; }
+  #atlas canvas { image-rendering: pixelated; background: #3a3850; }
+  /* desktop (Electron): лента за местене на прозореца, видима при посочване */
+  #winbar { display: none; }
+  body.desktop #winbar { display: flex; position: fixed; left: 0; right: 0; top: 0; height: 24px; z-index: 20; align-items: center; gap: 2px;
+    padding: 0 4px 0 10px; background: rgba(14, 10, 22, 0.88); border-bottom: 1px solid var(--ui-border); -webkit-app-region: drag; user-select: none;
+    opacity: 0; transition: opacity .2s; font-size: 12px; color: var(--ui-dim); }
+  body.desktop:hover #winbar { opacity: 1; }
+  #winbar .grip { flex: 1; }
+  #winbar button { -webkit-app-region: no-drag; width: 26px; height: 20px; border: 0; border-radius: 3px; background: transparent; color: var(--ui-text);
+    font: 13px/20px var(--font); cursor: pointer; padding: 0; }
+  #winbar button:hover { background: rgba(255,255,255,.12); }
+  #winbar button.on { color: #e0c24a; }
+  #winbar button[data-act="quit"]:hover { background: #e04a6b; }
+  body.desktop #hud { left: 4px; bottom: 4px; gap: 3px; font-size: 11px; }
+  body.desktop #hud span { padding: 1px 5px; }
+  body.desktop #legend { right: 4px; bottom: 4px; font-size: 11px; }
+  body.desktop #card { top: 30px; }
+  /* в малкия прозорец HUD-ът се показва при посочване; червеното "чакат те" и токените остават винаги */
+  body.desktop #hud span { transition: opacity .2s; }
+  body.desktop:not(:hover) #hud span:not(.alert):not(.tok) { opacity: 0; }
+  body.desktop #empty { font-size: 12px; padding: 5px 10px; }
+  body.tiny .tag { font-size: 10px; line-height: 12px; padding: 0 4px 1px; gap: 3px; }
+  body.tiny .tag i { width: 6px; height: 6px; }
+  body.tiny .tag .s { display: none; }
+  body.tiny .bubble { font-size: 10px; line-height: 12px; padding: 1px 4px 2px; border-width: 1px; }
+  body.tiny .bubble.show:not([data-state="waiting"]):not(.hl) { opacity: 0; }
+  #hud .tok { pointer-events: auto; cursor: pointer; }
+  #hud .tok:hover { border-color: #f0c840; }
+
+  /* магазин */
+  #shop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 14, 0.55); }
+  .shop-panel { width: min(760px, calc(100vw - 16px)); height: min(600px, calc(100vh - 16px)); display: flex; flex-direction: column;
+    background: #17121f; border: 2px solid #3a3452; border-radius: 4px; box-shadow: 4px 4px 0 rgba(0,0,0,.45); }
+  .shop-panel header { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid #2c2640; }
+  .shop-panel .ttl { font-size: 15px; }
+  .shop-panel .bal { margin-left: auto; padding: 2px 8px; border: 1px solid #7a5410; border-radius: 3px; color: #ffe27a; font-weight: 600; }
+  .shop-panel i[style] { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; background-size: 100% 100%; image-rendering: pixelated; }
+  .shop-panel button { font: inherit; color: var(--ui-text); background: #2a2440; border: 1px solid #3a3452; border-radius: 3px; padding: 2px 8px; cursor: pointer; }
+  .shop-panel button:hover:not(:disabled) { background: #3a3258; }
+  .shop-panel button:disabled { opacity: .5; cursor: default; }
+  .shop-panel .x { padding: 2px 7px; }
+  .shop-panel nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; border-bottom: 1px solid #2c2640; }
+  .shop-panel nav button.on { background: #e0c24a; color: #1d1626; border-color: #e0c24a; }
+  .shop-panel .body { flex: 1; overflow-y: auto; padding: 4px 10px 10px; }
+  .shop-panel h3 { margin: 10px 0 6px; font-size: 12px; font-weight: 600; color: var(--ui-dim); text-transform: uppercase; letter-spacing: .04em; }
+  .shop-panel .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+  .shop-panel .card { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; background: #1f1a2c; border: 1px solid #2c2640; border-radius: 3px; text-align: center; }
+  .shop-panel .card:hover { border-color: #6b6b80; }
+  .shop-panel .card.on { border-color: #4ac26b; box-shadow: inset 0 0 0 1px #4ac26b; }
+  .shop-panel .th { image-rendering: pixelated; margin: 2px 0; }
+  .shop-panel .avatar { display: flex; flex-wrap: wrap; gap: 16px; padding-top: 8px; }
+  .shop-panel .avatar .pv { display: flex; gap: 8px; align-items: flex-start; }
+  .shop-panel .avatar .pv canvas { border: 1px solid #2c2640; border-radius: 3px; }
+  .shop-panel .avatar .opts { flex: 1; min-width: 220px; }
+  .shop-panel .avatar .opts h3:first-child { margin-top: 0; }
+  .shop-panel .avatar .sw { display: flex; flex-wrap: wrap; gap: 6px; }
+  .shop-panel .avatar .sw button.on { background: #e0c24a; color: #1d1626; border-color: #e0c24a; }
+  .shop-panel .avatar .sw button.dot { width: 24px; height: 24px; padding: 0; border: 2px solid #1d1626; box-shadow: 0 0 0 1px #3a3452; }
+  .shop-panel .avatar .sw button.dot.on { border-color: #1d1626; box-shadow: 0 0 0 2px #e0c24a; }
+  .shop-panel .avatar .hint { margin: 12px 0 0; font-size: 12px; color: var(--ui-dim); }
+  .shop-panel .nm { font-size: 12px; line-height: 14px; }
+  .shop-panel .pr { font-size: 11px; color: #ffe27a; }
+  .shop-panel .card.owned .pr { color: var(--ui-dim); }
+  .shop-panel .act { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .shop-panel .act button { font-size: 11px; padding: 1px 6px; }
+  .shop-panel .act button.buy:not(:disabled) { background: #e0c24a; color: #1d1626; border-color: #e0c24a; font-weight: 600; }
+  .shop-panel .act button.on { background: #2e5a3a; border-color: #4ac26b; }
+  .shop-panel footer { padding: 6px 10px; border-top: 1px solid #2c2640; color: var(--ui-dim); font-size: 11px; }
+  .shop-panel footer.err { color: #ff9ab0; }
+  .trophies { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .trophy { display: flex; align-items: center; gap: 10px; padding: 5px 8px; background: #1f1a2c; border: 1px solid #2c2640; border-radius: 3px; }
+  .trophy.got { border-color: #7a5410; }
+  .trophy .ic { width: 27px; height: 27px; image-rendering: pixelated; flex: none; }
+  .trophy .tx { flex: 1; display: flex; flex-direction: column; }
+  .trophy .tx span { color: var(--ui-dim); font-size: 11px; }
+  .trophy .pg { text-align: right; font-size: 11px; color: var(--ui-dim); white-space: nowrap; }
+  .trophy.got .pg { color: #ffe27a; }
+  .trophy .pg em { display: block; font-style: normal; color: #ffe27a; }
+  .trophy .bar { display: inline-block; width: 70px; height: 5px; margin-right: 6px; background: #2c2640; vertical-align: 1px; }
+  .trophy .bar i { display: block; height: 100%; background: #e0c24a; }
+  /* известие за постижение */
+  #toast { position: fixed; left: 50%; top: 34px; transform: translateX(-50%); z-index: 25; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 16px 8px; background: #2a1e08; border: 2px solid #f0c840; border-radius: 4px; box-shadow: 3px 3px 0 rgba(0,0,0,.45); pointer-events: none; animation: pop .3s ease-out; }
+  #toast small { color: #f0c840; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  #toast b { font-size: 15px; color: #fff; }
+  #toast span { font-size: 12px; color: #e8d8a8; }
+  @keyframes pop { from { transform: translateX(-50%) scale(.8); opacity: 0; } }
+  body.desktop .shop-panel .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" width="420" height="250"></canvas>
+  <div id="overlay"></div>
+</div>
+<div id="hud"></div>
+<div id="legend"></div>
+<div id="tooltip" hidden></div>
+<div id="card" hidden></div>
+<div id="empty" hidden></div>
+<div id="debug" hidden></div>
+<div id="shop" hidden></div>
+<div id="toast" hidden></div>
+<div id="winbar"><span class="grip">Pixel Office</span><button data-act="settings" title="Настройки (размер, известия, демо…)">⚙</button><button data-act="pin" title="Винаги отгоре">▲</button><button data-act="through" title="Кликовете минават през прозореца (махни от менюто в трея)">◌</button><button data-act="hide" title="Скрий в трея">–</button><button data-act="quit" title="Затвори">✕</button></div>
+<script type="module" src="main.js"></script>
+</body>
+</html>
