@@ -65,21 +65,37 @@ function nowDate() {
 }
 
 // ---------------------------------------------------------------- цикъл
+// Адаптивна честота (заради процесора): пълна, докато нещо се движи бързо (office.animating()),
+// иначе 30 fps – картината е същата, просто не я рисуваме два пъти. Скрит прозорец в Electron
+// (backgroundThrottling е изключен) -> само логиката, 4 пъти в секунда, без рисуване.
+const CALM_MS = 1000 / 30 - 4;  // -4 мс толеранс за трептенето на vsync
+const HIDDEN_MS = 250;
 let last = performance.now();
+let shown = true, raf = 0, timer = 0;
+function schedule() {
+  if (shown) raf = requestAnimationFrame(frame);
+  else timer = setTimeout(() => frame(performance.now()), HIDDEN_MS);
+}
 function frame(now) {
-  const dt = Math.min(0.1, (now - last) / 1000);
+  if (shown && now - last < CALM_MS && !office.animating()) { schedule(); return; }
+  let dt = Math.min(shown ? 0.1 : HIDDEN_MS / 1000 * 2, (now - last) / 1000);
   last = now;
   model.tick(now);
-  office.update(dt, now);
+  while (dt > 0) { const s = Math.min(0.1, dt); office.update(s, now); fx.update(s); dt -= s; } // стъпки ≤0.1 s и при скрит прозорец
   if (office.layoutVersion !== appliedVersion) applyCanvas();
   tokens.update(now);
-  fx.update(dt);
-  const date = nowDate();
-  office.render(ctx, now, timeOfDay(date), date);
+  if (shown) {
+    const date = nowDate();
+    office.render(ctx, now, timeOfDay(date), date);
+  }
   ui.sync(now);
-  requestAnimationFrame(frame);
+  schedule();
 }
-requestAnimationFrame(frame);
+schedule();
+window.pixelOffice?.onVisible?.((v) => {
+  if (v === shown) return;
+  shown = v; cancelAnimationFrame(raf); clearTimeout(timer); schedule();
+});
 
 // ---------------------------------------------------------------- PNG override (по желание)
 // Сървърът връща списък на файловете в public/sprites, за да не правим заявки към липсващи файлове.

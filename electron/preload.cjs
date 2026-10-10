@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('pixelOffice', {
   onState: (fn) => ipcRenderer.on('state', (_e, st) => fn(st)),
   shop: (open) => ipcRenderer.send('shop', !!open),             // магазинът е отворен -> прозорецът временно расте
   onOpenShop: (fn) => ipcRenderer.on('open-shop', () => fn()),  // "Магазин" от менюто в трея / ⚙
+  onVisible: (fn) => ipcRenderer.on('visible', (_e, v) => fn(!!v)), // скрит прозорец -> страницата не рисува
 });

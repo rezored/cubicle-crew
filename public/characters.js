@@ -242,13 +242,18 @@ export class Actor {
       R(ctx, '#2a2030', bx + 1, by - 1, 15, 11); R(ctx, '#2a2030', bx, by, 17, 9);
       R(ctx, '#f4f1e8', bx + 1, by, 15, 9); R(ctx, '#f4f1e8', bx + 2, by - 1 + 1, 13, 1);
       R(ctx, '#dcd6c6', bx + 1, by + 8, 15, 1);
-      // зъбно колело + точки
-      const k = frameAt(now, 160, 4);
-      const gx = bx + 3, gy = by + 2;
-      R(ctx, '#8a7a30', gx + 1, gy, 3, 5); R(ctx, '#8a7a30', gx, gy + 1, 5, 3);
-      R(ctx, '#f4f1e8', gx + 2, gy + 2, 1, 1);
-      if (k % 2) { R(ctx, '#8a7a30', gx, gy, 1, 1); R(ctx, '#8a7a30', gx + 4, gy + 4, 1, 1); } else { R(ctx, '#8a7a30', gx + 4, gy, 1, 1); R(ctx, '#8a7a30', gx, gy + 4, 1, 1); }
-      for (let i = 0; i < 3; i++) R(ctx, i <= k - 1 ? '#e0c24a' : '#c8c0a8', bx + 9 + i * 2, by + 4, 1, 1);
+      // двоичен поток: редове 0/1 (3x5), които се превъртат нагоре по 1 пиксел
+      const sc = Math.floor((now + this.phase) / 120), off = sc % 6, row0 = Math.floor(sc / 6);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(bx + 1, by, 15, 8); ctx.clip();
+      for (let j = 0; j < 3; j++) {
+        const r = row0 + j;
+        for (let i = 0; i < 4; i++) {
+          const h = (Math.imul(r * 4 + i, 2654435761) + (this.phase | 0)) >>> 0;
+          drawText(ctx, (h >>> 7) & 1 ? '1' : '0', bx + 1 + i * 4, by + 1 + j * 6 - off, (h >>> 11) % 4 ? '#8a7a30' : '#e0c24a');
+        }
+      }
+      ctx.restore();
     }
     if (st === 'waiting') {
       const bob = Math.round(Math.sin(now / 140) * 1.5);

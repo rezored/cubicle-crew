@@ -14,6 +14,7 @@ const PORT = Number(process.env.PORT) || 4317;
 const ROOT = process.env.CLAUDE_PROJECTS_DIR || path.join(os.homedir(), '.claude', 'projects');
 const ACTIVE_WINDOW_MS = 60 * 60 * 1000; // следим файлове, пипани в последния час
 const POLL_MS = 400;
+const SCAN_MS = 2000;                    // пълно обхождане на папката (стари/възобновени файлове)
 const SESSIONS = process.env.CLAUDE_SESSIONS_DIR || path.join(path.dirname(ROOT), 'sessions'); // <pid>.json на всяка жива сесия
 const SESSIONS_MS = 3000;
 const LINK_WINDOW_MS = 15000;            // евристика: под-агент, появил се до толкова след Task/Agent
@@ -115,8 +116,11 @@ function scanSessions() {
 }
 
 // ---------- следене на файлове ----------
-const tracked = new Map(); // file -> { pos, rest: Buffer }
-let firstScan = true;
+const tracked = new Map(); // file -> { pos, rest: Buffer, mtime }
+// стари/заспали файлове -> { mtime, size, st? }; проверяват се само при пълното обхождане,
+// за да не викаме statSync за стотици стари транскрипти 2.5 пъти в секунда
+const dormant = new Map();
+let firstScan = true, lastFull = 0;
 
 function listJsonl(dir, out = [], depth = 0) {
   if (depth > 5) return out;
@@ -237,7 +241,7 @@ function handleLine(file, line) {
 
 function readNew(file, st) {
   let size;
-  try { size = fs.statSync(file).size; } catch { return; }
+  try { const stat = fs.statSync(file); size = stat.size; st.mtime = stat.mtimeMs; } catch { tracked.delete(file); return; }
   if (size < st.pos) { st.pos = 0; st.rest = Buffer.alloc(0); } // файлът е пренаписан
   if (size === st.pos) return;
   const fd = fs.openSync(file, 'r');
@@ -254,23 +258,51 @@ function readNew(file, st) {
   }
 }
 
+function listDir(dir) {
+  try { return fs.readdirSync(dir).filter((n) => n.endsWith('.jsonl')).map((n) => path.join(dir, n)); } catch { return []; }
+}
+
+// нов или събуден файл -> tracked; стар (непипан от час) -> dormant
+function consider(file, now) {
+  let stat;
+  try { stat = fs.statSync(file); } catch { return; }
+  const d = dormant.get(file);
+  if (d && d.mtime === stat.mtimeMs) return;
+  if (now - stat.mtimeMs > ACTIVE_WINDOW_MS) { dormant.set(file, { mtime: stat.mtimeMs, size: stat.size, st: d?.st }); return; }
+  dormant.delete(file);
+  let st = d?.st;
+  if (!st) {
+    // при старт не пускаме историята отново; възобновен стар файл – от размера, с който заспа
+    // (нищо от новото не се губи); нови файлове четем от началото
+    const old = firstScan || (stat.birthtimeMs || stat.ctimeMs) < STARTED - 5000;
+    st = { pos: d ? d.size : old ? stat.size : 0, rest: Buffer.alloc(0) };
+    if (DEBUG) console.log('следя', file);
+  }
+  tracked.set(file, st);
+}
+
 function poll() {
   const now = Date.now();
-  for (const file of listJsonl(ROOT)) {
-    let st = tracked.get(file);
-    if (!st) {
-      let stat;
-      try { stat = fs.statSync(file); } catch { continue; }
-      if (now - stat.mtimeMs > ACTIVE_WINDOW_MS) continue;
-      // при старт не пускаме историята отново, а нови файлове четем от началото
-      const old = firstScan || (stat.birthtimeMs || stat.ctimeMs) < STARTED - 5000;
-      st = { pos: old ? stat.size : 0, rest: Buffer.alloc(0) };
-      tracked.set(file, st);
-      if (DEBUG) console.log('следя', file);
+  if (now - lastFull >= SCAN_MS) {
+    lastFull = now;
+    for (const file of listJsonl(ROOT)) if (!tracked.has(file)) consider(file, now);
+    firstScan = false;
+  } else {
+    // между пълните обхождания – само папките на проектите (нова сесия) и на активните сесии (нов под-агент);
+    // readdir без statSync на старите файлове
+    const dirs = new Set();
+    try { for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) if (e.isDirectory()) dirs.add(path.join(ROOT, e.name)); } catch { /* няма папка */ }
+    for (const f of tracked.keys()) {
+      const dir = path.dirname(f);
+      dirs.add(dir);
+      if (path.basename(dir) !== 'subagents') dirs.add(path.join(dir, path.basename(f, '.jsonl'), 'subagents'));
     }
-    readNew(file, st);
+    for (const dir of dirs) for (const file of listDir(dir)) if (!tracked.has(file) && !dormant.has(file)) consider(file, now);
   }
-  firstScan = false;
+  for (const [file, st] of tracked) {
+    readNew(file, st);
+    if (st.mtime && now - st.mtime > ACTIVE_WINDOW_MS) { tracked.delete(file); dormant.set(file, { mtime: st.mtime, size: st.pos, st }); }
+  }
 }
 
 /** Пуска сървъра. Зает порт: с reuse – ползва вече работещия Cubicle Crew; иначе (и при чуждо приложение) – случаен свободен порт. */

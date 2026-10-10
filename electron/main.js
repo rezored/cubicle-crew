@@ -92,6 +92,10 @@ function createWindow() {
   win.on('resized', () => { if (Date.now() - programmatic > 600) { const nb = win.getBounds(); settings.baseSize = { w: nb.width, h: nb.height }; } remember(); });
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); refreshTray(); } });
   win.webContents.on('did-finish-load', sendState);
+  // скрит/минимизиран прозорец -> страницата спира да рисува (backgroundThrottling е изключен)
+  const sendVisible = () => win.webContents.send('visible', win.isVisible() && !win.isMinimized());
+  for (const ev of ['show', 'hide', 'minimize', 'restore']) win.on(ev, sendVisible);
+  win.webContents.on('did-finish-load', sendVisible);
   // връзки от страницата се отварят в браузъра, не в приложението
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:\/\//i.test(url)) shell.openExternal(url); return { action: 'deny' }; });
 }
