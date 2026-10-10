@@ -516,6 +516,17 @@ export class Office {
     if (!this._lastTeams || now - this._lastTeams > 1000) { this._lastTeams = now; this.manageTeams(now); this.ensureLayout(); }
   }
 
+  /** Нещо се движи бързо -> main.js рисува с пълна честота; иначе стига 30 fps
+   *  (в спокойна сцена всичко се мести ≤14 px/s, а най-бързата поза там е ≥160 мс). */
+  animating() {
+    for (const a of this.actors.values()) {
+      if (a.mode === 'walk' || a.mode === 'pace' || a.alpha !== a.fadeTo) return true;
+      if (a.pod >= 0 && (a.vstate === 'typing' || a.vstate === 'running')) return true; // пози по 75–110 мс
+    }
+    const d = this.room.doorOpen;
+    return (d > 0 && d < 1) || this.darts.flying.length > 0 || this.fx.list.some((p) => p.layer === 'top');
+  }
+
   emitParticles(a, now, dt) {
     const L = this.L;
     const fx = a.fx;
