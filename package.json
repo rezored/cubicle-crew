@@ -19,7 +19,8 @@
     "lan.js",
     "folders.js",
     "public/",
-    "!public/sprites/*.psd"
+    "!public/sprites/*.psd",
+    "index.d.ts"
   ],
   "scripts": {
     "start": "node server.js",
@@ -155,5 +156,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rezored/cubicle-crew.git"
-  }
+  },
+  "types": "./index.d.ts"
 }
