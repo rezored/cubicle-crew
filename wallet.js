@@ -23,7 +23,7 @@ const fresh = () => ({
 // записи отпреди началната настройка: не я показваме (котката им си остава)
 const load = (s) => ({ ...fresh(), setup: 'legacy', ...s });
 // полетата, които клиентът получава при промяна на обзавеждането
-const DECOR_KEYS = ['owned', 'equipped', 'achievements', 'avatar', 'petNames', 'starter', 'setup', 'crew', 'crewSeen', 'crewMe', 'officeName', 'pictures'];
+const DECOR_KEYS = ['owned', 'equipped', 'achievements', 'avatar', 'petNames', 'starter', 'setup', 'crew', 'crewSeen', 'crewMe', 'officeName', 'pictures', 'officeSign'];
 
 function readJson(f) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } }
 function alive(pid) { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } }

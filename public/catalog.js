@@ -1,6 +1,7 @@
 // Каталог на обзавеждането + постижения. Общ за сървъра и клиента (без DOM): цени, слотове и правилата
 // за купуване/слагане се проверяват на едно място. Рисуването на всеки предмет е в environment.js.
 // ВНИМАНИЕ: id-тата са записът в save.json (и бъдещи Steam ключове) – НИКОГА не ги преименувай.
+import { cleanOfficeSign } from './office-sign.js';
 
 // ---- слотове: къде се слага предмет от дадена група ----
 // def = безплатният предмет по подразбиране; def: null = слотът може да е празен (вкл./изкл. предмет)
@@ -178,6 +179,9 @@ export function cleanPic(p) {
 }
 /** { name } – табелата; { picture: i, pic | null } – картина i (null = пак постерът). */
 export function setOffice(save, b = {}) {
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return { ok: false, error: 'officeSign' };
+  const sign = 'sign' in b ? cleanOfficeSign(b.sign) : undefined;
+  if (sign === null) return { ok: false, error: 'officeSign' };
   if ('picture' in b) {
     const i = Number(b.picture);
     if (!Number.isInteger(i) || i < 0 || i >= PIC_SLOTS) return { ok: false, error: 'picture' };
@@ -191,6 +195,7 @@ export function setOffice(save, b = {}) {
     const n = cleanOfficeName(b.name);
     if (n) save.officeName = n; else delete save.officeName;
   }
+  if (sign) save.officeSign = sign;
   return { ok: true };
 }
 

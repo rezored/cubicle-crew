@@ -4,6 +4,30 @@ import assert from 'node:assert/strict';
 import { AVATAR, cleanAv, setAvatar, crewKey, setCrew, seeCrew, CREW_SEEN_MAX, setOffice, cleanPic, PIC_W, PIC_H } from '../public/catalog.js';
 import { SKINS, HAIRS, PANTS, SKIRTS, SHOES, IRIS, ACCENTS, TIGHTS } from '../public/palette.js';
 import { AVATAR_HAIR, AVATAR_TOPS, AVATAR_BOTTOMS, HEADS, BEARDS, DESK_ITEMS, randomAv, avatarLook } from '../public/sprites.js';
+import { DEFAULT_OFFICE_SIGN } from '../public/office-sign.js';
+
+test('office: enamel styling uses the existing name and leaves saved pictures alone', () => {
+  const pictures = [null, { pal: ['#557799'], px: '0'.repeat(PIC_W * PIC_H) }];
+  const save = { officeName: 'Studio', pictures };
+  const sign = { ...DEFAULT_OFFICE_SIGN, enabled: true, subtitle: '  Добре   дошли  ', titleColor: '#ABCDEF', title: 'Extra name' };
+  assert.equal(setOffice(save, { sign }).ok, true);
+  assert.equal(save.officeName, 'Studio');
+  assert.deepEqual(save.officeSign, { ...DEFAULT_OFFICE_SIGN, enabled: true, subtitle: 'Добре дошли', titleColor: '#abcdef' });
+  assert.equal(setOffice(save, { name: 'Нов офис' }).ok, true);
+  assert.equal(save.officeName, 'Нов офис');
+  assert.equal(save.officeSign.subtitle, 'Добре дошли');
+  assert.equal(setOffice(save, { sign: { ...save.officeSign, enabled: false } }).ok, true);
+  assert.equal(save.officeSign.enabled, false);
+  assert.deepEqual(save.pictures, pictures);
+});
+
+test('office: invalid styling does not partially change the name or picture slots', () => {
+  const save = { officeName: 'Existing', pictures: [null] };
+  const before = structuredClone(save);
+  assert.deepEqual(setOffice(save, { name: 'New', picture: 0, pic: null, sign: { ...DEFAULT_OFFICE_SIGN, titleColor: 'red' } }),
+    { ok: false, error: 'officeSign' });
+  assert.deepEqual(save, before);
+});
 
 test('crew: concurrent actors can save outfits independently, including a long project key', () => {
   const save = {};

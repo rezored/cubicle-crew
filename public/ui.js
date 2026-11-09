@@ -9,6 +9,7 @@ import { prefs } from './prefs.js';
 import { boardData, demoBoardData, PAGE_DAYS } from './board.js';
 import { settingsHtml } from './settings.js';
 import { WhatsNew } from './whatsnew.js';
+import { showOfficeSignText } from './office-sign.js';
 
 // торбичка за пазаруване 9x9 (иконата на бутона за магазина) – рисува се тук, без външни файлове
 const BAG = ['...aaa...', '..a...a..', '..a...a..', 'bbbbbbbbb', 'bcccccccb', 'bcccdcccb', 'bccdddccb', 'bcccdcccb', 'bbbbbbbbb'];
@@ -361,17 +362,23 @@ export class UI {
       (this.bridge ? `<span class="more">${P.global}</span>` : '');
   }
 
-  /** Табелата с името на офиса (save.officeName) – DOM върху горния ръб на дъската. */
+  /** Името и подзаглавието са DOM текст на табелата над дъската. */
   syncSign() {
     const name = this.office.officeName || '', b = this.office.room?.board;
+    const style = this.office.officeSign?.enabled ? this.office.officeSign : null;
     const show = !!(name && b && this.cssScale >= 1.5 && !PARAMS.overlay);
     if (!this.sign) { if (!show) return; this.sign = el('div', 'sign', this.overlay); }
     this.sign.hidden = !show;
     if (!show) return;
-    const key = name + '|' + b.x + '|' + b.y + '|' + b.w + '|' + this.cssScale;
+    const key = JSON.stringify([name, b.x, b.y, b.w, this.cssScale, this.dpr, style]);
     if (key === this.signKey) return;
     this.signKey = key;
-    this.sign.textContent = name;
+    this.sign.classList.toggle('office-sign-text', !!style);
+    if (style) showOfficeSignText(this.sign, name, style);
+    else {
+      this.sign.textContent = name;
+      this.sign.title = name;
+    }
     this.sign.style.left = this.px(b.x + b.w / 2) + 'px';
     this.sign.style.top = this.px(b.y) + 'px';
     this.sign.style.maxWidth = this.px(b.w) + 'px';

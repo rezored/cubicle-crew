@@ -3,6 +3,7 @@
 // и пращаме покупките (POST /api/buy, /api/equip). В демото същите правила работят в паметта.
 import { PARAMS, T } from './config.js';
 import { prefs } from './prefs.js';
+import { cleanOfficeSign } from './office-sign.js';
 import { Earner, dayKey } from './rules.js';
 import { resolveDecor, buyItem, equipItem, setAvatar, avatarOf, grantAchievements, setupOffice, setPetName, giveTreat, unlocked, setCrew, seeCrew, crewKey, setOffice } from './catalog.js';
 
@@ -57,7 +58,9 @@ export class Tokens {
       this.office.setCrew(this.save.crew, this.save.crewSeen, this.save.crewMe);
       // моят офис: табелата и картините на стената
       this.save.officeName = m.officeName || ''; this.save.pictures = m.pictures || [];
+      this.save.officeSign = cleanOfficeSign(m.officeSign);
       this.office.officeName = this.save.officeName;
+      this.office.officeSign = this.save.officeSign;
       // любимци и началната настройка (стар сървър без тези полета: setup остава undefined = не се показва)
       this.save.petNames = m.petNames || {}; this.save.starter = m.starter; this.save.setup = m.setup;
       this.office.petNames = this.save.petNames;
@@ -130,7 +133,7 @@ export function demoWallet(tokens) {
   const push = (delta, reason, src, by, extra) => tokens.onWallet({
     type: 'wallet', tokens: save.tokens, lifetime: save.lifetimeTokens, delta, reason, src, by,
     owned: save.owned, equipped: save.equipped, achievements: save.achievements, avatar: save.avatar,
-    petNames: save.petNames, starter: save.starter, setup: save.setup, crew: save.crew, crewSeen: save.crewSeen, crewMe: save.crewMe, officeName: save.officeName, pictures: save.pictures,
+    petNames: save.petNames, starter: save.starter, setup: save.setup, crew: save.crew, crewSeen: save.crewSeen, crewMe: save.crewMe, officeName: save.officeName, pictures: save.pictures, officeSign: save.officeSign,
     stats: { tasksDone: save.tasksDone, lifetimeActiveSec: save.lifetimeActiveSec, daysActive: save.daysActive }, ...extra,
   });
   const achievements = () => { for (const a of grantAchievements(save, dayKey())) push(a.reward, 'achievement', null, null, { achievement: a.id }); };

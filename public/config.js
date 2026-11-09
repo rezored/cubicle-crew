@@ -241,7 +241,9 @@ const T_BG = {
       picture: 'Не става с тази картина – пробвай друга.', crew: 'Не стана – пробвай пак.' },
     mine: {
       title: 'Моят офис', name: 'Име на офиса', namePh: 'напр. Нощните сови ООД', save: 'Запази',
-      nameHint: 'Стои на месингова табела над дъската.',
+      nameHint: 'Стои на табелата над дъската.',
+      customSign: 'Персонализирана табела', subtitle: 'Подзаглавие', titleColor: 'Цвят на името', subtitleColor: 'Цвят на подзаглавието',
+      signPreview: 'Преглед на табелата', signExample: 'ТВОЯТ ОФИС', signError: 'Провери текста и цветовете на табелата.',
       pics: 'Твои картини', where: ['До диспенсъра', 'Между прозорците', 'Между прозорците (2)'],
       choose: 'Избери снимка…', remove: 'Махни', busy: 'Рисувам…',
       picHint: 'Снимката става на пиксели тук, на компютъра ти – никъде не се качва. Ако стаята е тясна и на това място няма постер, картината не се вижда.',
@@ -626,7 +628,9 @@ const T_EN = {
       picture: "That picture didn't work – try another one.", crew: "That didn't work – try again." },
     mine: {
       title: 'My office', name: 'Office name', namePh: 'e.g. Night Owls Ltd.', save: 'Save',
-      nameHint: 'Shown on a brass plaque above the whiteboard.',
+      nameHint: 'Shown on the plaque above the whiteboard.',
+      customSign: 'Customize plaque', subtitle: 'Subtitle', titleColor: 'Name color', subtitleColor: 'Subtitle color',
+      signPreview: 'Plaque preview', signExample: 'YOUR OFFICE', signError: 'Check the plaque text and colors.',
       pics: 'Your pictures', where: ['By the water cooler', 'Between the windows', 'Between the windows (2)'],
       choose: 'Choose a picture…', remove: 'Remove', busy: 'Drawing…',
       picHint: 'The picture is turned into pixels right here on your computer – it is not uploaded anywhere. If the room is narrow and has no poster at that spot, the picture is not shown.',

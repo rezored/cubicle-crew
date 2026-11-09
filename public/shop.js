@@ -10,6 +10,7 @@ import { thumb, drawDeskItem, drawPicture } from './environment.js';
 import { Cat, Dog, Critter } from './characters.js';
 import { coinUrl } from './tokens.js';
 import { makeCanvas, fmtUsd } from './util.js';
+import { DEFAULT_OFFICE_SIGN, OFFICE_SUBTITLE_MAX, showOfficeSignText } from './office-sign.js';
 
 /** Снимка -> пикселна картина PIC_W x PIC_H с до 12 цвята (k-means), изцяло в браузъра. */
 async function pixelize(file) {
@@ -161,6 +162,7 @@ export class Shop {
   close() {
     if (this.root.hidden) return;
     this.root.hidden = true;
+    this.officeDraft = null;
     this.tokens.setPreview(null);
     document.body.classList.remove('shopping');
     window.pixelOffice?.shop?.(false);
@@ -183,7 +185,7 @@ export class Shop {
     const afford = ITEMS.filter((it) => tab.groups.includes(it.group) && !owns(s, it.id) && it.price <= t.tokens).map((it) => it.id).join();
     const key = [this.tab, JSON.stringify(s.owned), JSON.stringify(s.equipped), JSON.stringify(s.achievements), afford,
       tab.id === 'trophies' ? JSON.stringify(s.stats) + s.lifetime : '', tab.id === 'stats' ? 'stats' : '', JSON.stringify(s.avatar), tab.id === 'weather' ? JSON.stringify(this.weather) : '', JSON.stringify(s.petNames), this.exoSel,
-      tab.id === 'decor' ? (s.officeName || '') + JSON.stringify(s.pictures) : '',
+      tab.id === 'decor' ? JSON.stringify([s.officeName, s.officeSign, s.pictures]) : '',
       tab.id === 'avatar' ? (s.crewMe || '') + JSON.stringify(s.crewSeen) + this.crewHere().join() : '',
       present ? JSON.stringify([s.crew, s.crewSeen, s.crewMe, this.crewSel, this.tokens.office?.avatarId,
         [...present].map(([key, a]) => [key, a.id, a.agent.label, a.agent.atype, a.agent.provider])]) : ''].join('|');
@@ -415,17 +417,52 @@ export class Shop {
     const s = this.tokens.save, M = T.shop.mine, be = this.tokens.backend;
     const sec = el('section', 'mine', this.body);
     el('h3', null, sec, M.name);
-    const form = el('form', 'pname', sec);
-    const inp = el('input', null, form);
-    inp.name = 'office-name'; inp.maxLength = OFFICE_NAME_MAX; inp.placeholder = M.namePh; inp.value = s.officeName || '';
-    inp.setAttribute('aria-label', M.name);
-    el('button', null, form, M.save).type = 'submit';
+    const form = el('form', 'office-sign-form', sec);
+    const draft = this.officeDraft || { name: s.officeName || '', sign: { ...DEFAULT_OFFICE_SIGN, ...s.officeSign } };
+    const preview = el('div', 'office-sign-text', form);
+    preview.setAttribute('aria-label', M.signPreview);
+    el('p', 'hint', sec).textContent = M.nameHint;
+    const refreshPreview = () => {
+      preview.hidden = !draft.sign.enabled;
+      showOfficeSignText(preview, draft.name || M.signExample, draft.sign);
+    };
+    const field = (data, key, label, type, limit) => {
+      const row = el('label', null, form);
+      form.insertBefore(row, preview);
+      el('span', null, row).textContent = label;
+      const input = el('input', null, row);
+      input.name = 'office-' + key;
+      input.type = type;
+      if (limit) input.maxLength = limit;
+      if (type === 'checkbox') input.checked = data[key];
+      else input.value = data[key];
+      input.oninput = () => {
+        data[key] = type === 'checkbox' ? input.checked : input.value;
+        this.officeDraft = draft;
+        refreshPreview();
+      };
+      return input;
+    };
+    field(draft, 'name', M.name, 'text', OFFICE_NAME_MAX).placeholder = M.namePh;
+    field(draft.sign, 'enabled', M.customSign, 'checkbox');
+    field(draft.sign, 'subtitle', M.subtitle, 'text', OFFICE_SUBTITLE_MAX);
+    field(draft.sign, 'titleColor', M.titleColor, 'color');
+    field(draft.sign, 'subtitleColor', M.subtitleColor, 'color');
+    refreshPreview();
+    const save = el('button', null, form, M.save);
+    save.type = 'submit';
+    save.disabled = !!this.officeSaving;
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const r = await be.office?.({ name: inp.value });
-      if (r && !r.ok) this.flash(T.shop.errors[r.error] || r.error);
+      if (this.officeSaving) return;
+      this.officeSaving = save.disabled = true;
+      const sent = JSON.stringify(draft);
+      const r = await be.office?.(JSON.parse(sent));
+      this.officeSaving = save.disabled = false;
+      if (r?.ok && this.officeDraft === draft && JSON.stringify(draft) === sent) this.officeDraft = null;
+      if (r && !r.ok) this.flash(r.error === 'officeSign' ? M.signError : T.shop.errors[r.error] || r.error);
+      if (!this.root.hidden) { this.key = ''; this.render(); }
     };
-    el('p', 'hint', sec).textContent = M.nameHint;
     el('h3', null, sec, M.pics);
     const row = el('div', 'pics', sec);
     for (let i = 0; i < PIC_SLOTS; i++) {

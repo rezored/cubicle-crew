@@ -24,6 +24,11 @@
     background: linear-gradient(#f0d488, #c89a48); border: 1px solid #5a3c18; border-radius: 2px; box-shadow: 0 1px 0 rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
   #overlay .sign[hidden] { display: none; }
+  #overlay .sign.office-sign-text, .office-sign-text { display: flex; align-items: baseline; gap: .45em;
+    background: #e6edf4; border: 1px solid #7d96ae; border-radius: 2px; font-weight: 700; line-height: 1.45; letter-spacing: normal; }
+  .office-sign-text span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .office-sign-text .subtitle { font-size: .85em; font-weight: 600; padding-left: .45em; border-left: 1px solid #a7b8c9; }
+  .office-sign-text[hidden] { display: none; }
 
   /* етикет под бюрото */
   .tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 4px; max-width: var(--label-max);
@@ -215,6 +220,13 @@
   .shop-panel .crew > button.meon { background: #e0c24a; color: #1d1626; border-color: #e0c24a; }
   /* „Моят офис“: табела + твои картини */
   .shop-panel .mine .pics { display: flex; flex-wrap: wrap; gap: 8px; }
+  .shop-panel .office-sign-form { display: grid; gap: 7px; max-width: 420px; }
+  .shop-panel .office-sign-form label { display: grid; grid-template-columns: minmax(0,1fr) minmax(70px,1.5fr); align-items: center; gap: 6px; }
+  .shop-panel .office-sign-form input { min-width: 0; justify-self: start; }
+  .shop-panel .office-sign-form input[type="text"] { box-sizing: border-box; width: 100%; font: inherit; color: var(--ui-text);
+    background: #0f0c16; border: 1px solid #3a3452; border-radius: 3px; padding: 3px 6px; }
+  .shop-panel .office-sign-form .office-sign-text { justify-self: start; max-width: 100%; padding: 0 .7em; }
+  .shop-panel .office-sign-form button { justify-self: start; }
   .shop-panel .mine .pic { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; background: #1f1a2c; border: 1px solid #2c2640; border-radius: 3px; width: 120px; text-align: center; }
   .shop-panel .mine .pic canvas { width: 48px; height: 60px; }
   .shop-panel .mine .pic .nm { font-size: 11px; color: var(--ui-dim); }
