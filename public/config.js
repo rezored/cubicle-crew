@@ -309,6 +309,9 @@ const T_BG = {
     updSelf: 'Изтегля се, проверява се и се инсталира върху тази – приложението се рестартира само.', updManual: 'Изтегли инсталатора и го пусни – той обновява старата версия.',
     install: 'Изтегли и инсталирай', download: 'Изтегли', notes: 'Какво има в нея', later: 'По-късно',
     items: {
+      '2.22.2': [
+        ['Твоя табела', 'Раздел „Декор“ → „Моят офис“: табелата над дъската може да има подзаглавие на втори ред и цветове по избор за името и подзаглавието – с преглед, преди да запазиш. Благодарим на cagansiimsek!'],
+      ],
       '2.22.1': [
         ['Кой е в офиса сега', 'Разделът „Екип“ показва най-отгоре хората, които са в офиса в момента – всеки с отделна картичка, дори двама от един проект или два помощника от един вид. Така обличаш точно този, когото виждаш.'],
         ['Малтийска болонка', 'Нова порода куче в магазина – малка, бяла, с клепнали уши и рунтава опашка. Благодарим на cagansiimsek!'],
@@ -695,6 +698,9 @@ const T_EN = {
     updSelf: 'It downloads, gets checked and installs over this one – the app restarts by itself.', updManual: 'Download the installer and run it – it updates the old version.',
     install: 'Download and install', download: 'Download', notes: "What's in it", later: 'Later',
     items: {
+      '2.22.2': [
+        ['Your own plaque', 'Decor tab → My office: the plaque above the whiteboard can have a subtitle on a second line and colours of your choice for the name and the subtitle – with a preview before you save. Thanks to cagansiimsek!'],
+      ],
       '2.22.1': [
         ['Who is in the office now', 'The Crew tab shows the people in the office right now at the top – each with its own card, even two from the same project or two helpers of the same kind. So you dress exactly the one you see.'],
         ['Maltese', 'A new dog breed in the shop – small, white, with floppy ears and a fluffy tail. Thanks to cagansiimsek!'],
